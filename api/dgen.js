@@ -52,19 +52,104 @@ async function fetchText(url, headers = {}) {
       signal: controller.signal,
     });
     const text = await response.text();
-    return { response, text };
+    return {
+      response,
+      text,
+      contentType: response.headers.get('content-type') || '',
+    };
   } finally {
     clearTimeout(timer);
   }
 }
 
 async function fetchJson(url, headers = {}) {
-  const { response, text } = await fetchText(url, headers);
+  const { response, text, contentType } = await fetchText(url, headers);
   try {
-    return { ok: response.ok, status: response.status, body: JSON.parse(text) };
+    return { ok: response.ok, status: response.status, contentType, body: JSON.parse(text) };
   } catch {
-    return { ok: false, status: response.status, raw: text };
+    return { ok: false, status: response.status, contentType, raw: text };
   }
+}
+
+function decodeXmlText(value) {
+  return String(value || '')
+    .replace(/^<!\[CDATA\[|\]\]>$/g, '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&')
+    .trim();
+}
+
+function xmlValue(xml, name) {
+  const safeName = String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = String(xml).match(new RegExp(`<${safeName}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${safeName}>`, 'i'));
+  return match ? decodeXmlText(match[1]) : null;
+}
+
+function parseKepcoXml(text) {
+  const xml = String(text || '');
+  const itemBlocks = xml.match(/<item(?:\s[^>]*)?>[\s\S]*?<\/item>/gi) || [];
+  const dataBlocks = xml.match(/<data(?:\s[^>]*)?>[\s\S]*?<\/data>/gi) || [];
+  const blocks = itemBlocks.length ? itemBlocks : dataBlocks;
+  const data = blocks.map((block) => ({
+    substCd: xmlValue(block, 'substCd'),
+    substNm: xmlValue(block, 'substNm'),
+    jsSubstPwr: xmlValue(block, 'jsSubstPwr'),
+    substPwr: xmlValue(block, 'substPwr'),
+    mtrNo: xmlValue(block, 'mtrNo'),
+    jsMtrPwr: xmlValue(block, 'jsMtrPwr'),
+    mtrPwr: xmlValue(block, 'mtrPwr'),
+    dlCd: xmlValue(block, 'dlCd'),
+    dlNm: xmlValue(block, 'dlNm'),
+    jsDlPwr: xmlValue(block, 'jsDlPwr'),
+    dlPwr: xmlValue(block, 'dlPwr'),
+    vol1: xmlValue(block, 'vol1'),
+    vol2: xmlValue(block, 'vol2'),
+    vol3: xmlValue(block, 'vol3'),
+  })).filter((row) => Object.values(row).some(Boolean));
+
+  return {
+    recognized: /<(?:response|items|item|data|errCd|returnCode)(?:\s|>|\/)/i.test(xml),
+    errCd: xmlValue(xml, 'errCd') || xmlValue(xml, 'returnCode'),
+    errMsg: xmlValue(xml, 'errMsg') || xmlValue(xml, 'returnAuthMsg') || xmlValue(xml, 'returnMessage'),
+    data,
+  };
+}
+
+async function fetchKepcoResponse(url) {
+  const { response, text, contentType } = await fetchText(url, {
+    Accept: 'application/json, application/xml, text/xml, */*',
+  });
+  try {
+    return {
+      ok: response.ok,
+      status: response.status,
+      contentType,
+      format: 'json',
+      body: JSON.parse(text),
+    };
+  } catch {
+    const trimmed = text.trim();
+    if (trimmed.startsWith('<')) {
+      const parsed = parseKepcoXml(trimmed);
+      return {
+        ok: response.ok,
+        status: response.status,
+        contentType,
+        format: 'xml',
+        body: parsed.recognized ? parsed : null,
+      };
+    }
+    return { ok: response.ok, status: response.status, contentType, format: 'unknown', body: null };
+  }
+}
+
+function isKepcoError(body) {
+  const code = String(body?.errCd || body?.returnCode || '').trim().toUpperCase();
+  const successCodes = new Set(['', '0', '00', '000', '200', 'SUCCESS', 'NORMAL_SERVICE']);
+  return Boolean(body?.error || (code && !successCodes.has(code)));
 }
 
 function findCityCode(addressText) {
@@ -270,21 +355,23 @@ export default async function handler(req, res) {
       cityCd: lookup.cityCd,
       addrLidong: lookup.addrLidong,
       apiKey,
-      returnType: 'json',
+      returnType: 'JSON',
     });
     if (lookup.addrLi) params.set('addrLi', lookup.addrLi);
     if (lookup.addrJibun) params.set('addrJibun', lookup.addrJibun);
 
-    const result = await fetchJson(`${KEPCO_DGEN_URL}?${params.toString()}`, {
-      Accept: 'application/json',
-    });
+    const result = await fetchKepcoResponse(`${KEPCO_DGEN_URL}?${params.toString()}`);
     if (!result.body) {
-      return res.status(502).json({ ok: false, error: '한전 API 응답을 해석하지 못했습니다. 잠시 후 다시 시도해 주세요.' });
-    }
-    if (result.body.errCd || result.body.error) {
+      const type = result.contentType.split(';')[0] || result.format;
       return res.status(502).json({
         ok: false,
-        error: valueOrNull(result.body.errMsg || result.body.error || result.body.message) || '한전 API 조회에 실패했습니다.',
+        error: `한전 API가 예상 형식이 아닌 응답을 반환했습니다. (HTTP ${result.status}, ${type})`,
+      });
+    }
+    if (isKepcoError(result.body)) {
+      return res.status(502).json({
+        ok: false,
+        error: valueOrNull(result.body.errMsg || result.body.error || result.body.message || result.body.returnAuthMsg || result.body.returnMessage) || '한전 API 조회에 실패했습니다.',
       });
     }
 
