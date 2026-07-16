@@ -16,6 +16,7 @@ const escapeHtml = (value)=>String(value ?? '')
   .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 
 const capacityText = (value)=>{
+  if(value === null || value === undefined || String(value).trim() === '') return '-';
   const number = Number(value);
   return Number.isFinite(number) ? `${number.toLocaleString('ko-KR')} kW` : '-';
 };
