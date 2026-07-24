@@ -1,7 +1,7 @@
 {
-  "name":"작업안전 체크리스트",
-  "short_name":"안전체크",
-  "description":"96종 표준공정 기반 페이퍼리스 작업안전 체크리스트",
+  "name":"전력연구원 작업안전 체크리스트",
+  "short_name":"전력연구원",
+  "description":"전력연구원 96종 표준공정 기반 페이퍼리스 작업안전 체크리스트",
   "start_url":"./#/checklists",
   "display":"standalone",
   "background_color":"#f4f7fa",

@@ -1,12 +1,12 @@
 (function(){
   'use strict';
-  window.APP_VERSION='1.6.0';
+  window.APP_VERSION='1.7.0';
   const app=document.getElementById('app');
   const title=document.getElementById('pageTitle');
   const sub=document.getElementById('pageSub');
   window.mount=function(node){ app.innerHTML=''; app.appendChild(node); window.scrollTo(0,0); };
   window.setTop=function(t,s){
-    title.textContent=t||'작업안전 체크리스트';
+    title.textContent=t||'전력연구원 작업안전 체크리스트';
     const text=String(s||'').trim();
     sub.textContent=text;
     sub.hidden=!text;
@@ -34,7 +34,7 @@
       refreshing=true;
       location.reload();
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260724r7',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260724r8',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{}));
   }
   route();
 })();
