@@ -15,7 +15,7 @@
   const FALLBACK_KEY = 'POWER_TBM_RESEARCH_CHECKLIST_FALLBACK_V1';
   const ACTIVE_DRAFT_KEY = 'POWER_TBM_RESEARCH_CHECKLIST_ACTIVE_DRAFT_V1';
   const PDF_VERSION = 'R&D 체크리스트 Version 1.0 / 2026.05';
-  const PDF_RENDER_VERSION = 'standalone-pdf-r2-20260724';
+  const PDF_RENDER_VERSION = 'standalone-pdf-r3-20260724';
   let dbPromise = null;
   let writerCleanup = null;
 
@@ -530,7 +530,13 @@
           <label class="wide">작업공종(Code)<input type="text" value="${esc(template.code)}" readonly></label>
           <label class="wide">작업명<input type="text" value="${esc(template.workName)}" readonly></label>
           <label class="wide">공정명(과제번호)<input id="clProjectName" data-meta="projectName" type="text" value="${esc(m.projectName)}" placeholder="예: R25XX01 암모니아 혼소 발전 실증"></label>
-          <label>작업일시<input id="clDatetime" data-meta="datetime" type="datetime-local" value="${esc(m.datetime)}"></label>
+          <label class="date-time-field">작업일시
+            <span class="compact-datetime-control" id="clDatetimeControl">
+              <span class="compact-datetime-value" id="clDatetimeDisplay">${esc(m.datetime ? displayDateTime(m.datetime) : '날짜·시간 선택')}</span>
+              <span class="compact-datetime-action" aria-hidden="true">변경</span>
+              <input id="clDatetime" data-meta="datetime" class="native-datetime-overlay" type="datetime-local" value="${esc(m.datetime)}" aria-label="작업일시 선택">
+            </span>
+          </label>
           <label>작업장소<input data-meta="location" type="text" value="${esc(m.location)}" placeholder="실험실·현장명"></label>
           <label>회사·연구소<input data-meta="company" type="text" value="${esc(m.company)}" placeholder="회사 또는 연구소"></label>
           <label>부서<input data-meta="department" type="text" value="${esc(m.department)}" placeholder="부서명"></label>
@@ -849,10 +855,16 @@
       if(a) a.textContent=String(m && m.value || '성명 미입력');
       if(b) b.textContent=String(r && r.value || '성명 미입력');
     }
+    function updateDatetimeDisplay(){
+      const input=node.querySelector('#clDatetime');
+      const display=node.querySelector('#clDatetimeDisplay');
+      if(display) display.textContent=input && input.value ? displayDateTime(input.value) : '날짜·시간 선택';
+    }
     node.querySelectorAll('[data-meta]').forEach(el=>{
-      el.addEventListener('input',()=>{ collect(); updateSignNames(); scheduleSave(); });
-      el.addEventListener('change',()=>{ collect(); updateSignNames(); scheduleSave(); });
+      el.addEventListener('input',()=>{ collect(); updateSignNames(); if(el.id==='clDatetime') updateDatetimeDisplay(); scheduleSave(); });
+      el.addEventListener('change',()=>{ collect(); updateSignNames(); if(el.id==='clDatetime') updateDatetimeDisplay(); scheduleSave(); });
     });
+    updateDatetimeDisplay();
     node.querySelectorAll('[data-record-check]').forEach(el=>el.addEventListener('change',scheduleSave));
 
     node.querySelectorAll('.checklist-cp').forEach(card=>{
@@ -936,7 +948,7 @@
         note.classList.add('linked');
         note.innerHTML='✓ TBM 회의록 기본정보를 다시 불러왔습니다. <a href="#/tbm/minutes">TBM 회의록 열기</a>';
       }
-      updateSignNames(); scheduleSave(); flash('TBM 기본정보를 반영했습니다.','ok');
+      updateSignNames(); updateDatetimeDisplay(); scheduleSave(); flash('TBM 기본정보를 반영했습니다.','ok');
     });
 
     const validation=node.querySelector('#checklistValidationBox');
