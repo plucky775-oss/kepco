@@ -21,6 +21,14 @@
     }catch(e){ app.innerHTML='<section style="padding:24px;background:#fff;border-radius:18px"><h2>화면을 열지 못했습니다</h2><p>'+String(e.message||e)+'</p><a href="#/checklists">홈으로 이동</a></section>'; }
   }
   window.addEventListener('hashchange',route);
-  if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  if('serviceWorker' in navigator){
+    let refreshing=false;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(refreshing || String(location.hash || '').startsWith('#/checklists/write')) return;
+      refreshing=true;
+      location.reload();
+    });
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{}));
+  }
   route();
 })();
