@@ -4,8 +4,8 @@
   "description":"전력연구원 96종 표준공정 기반 페이퍼리스 작업안전 체크리스트",
   "start_url":"./#/checklists",
   "display":"standalone",
-  "background_color":"#f4f7fa",
-  "theme_color":"#16324a",
+  "background_color":"#f3f8ff",
+  "theme_color":"#1685f5",
   "lang":"ko-KR",
   "icons":[
     {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png"},

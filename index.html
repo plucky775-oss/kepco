@@ -3,36 +3,48 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#16324a">
+  <meta name="theme-color" content="#1685f5">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="전력연구원 체크">
   <title>전력연구원 작업안전 체크리스트</title>
-  <meta name="application-version" content="1.7.0">
+  <meta name="application-version" content="1.8.0">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="app.css?v=20260724r8">
-  <link rel="stylesheet" href="styles-checklist.css?v=20260724r8">
+  <link rel="stylesheet" href="app.css?v=20260725r1">
+  <link rel="stylesheet" href="styles-checklist.css?v=20260725r1">
 </head>
 <body>
   <header id="topbar" class="topbar">
-    <button id="backBtn" class="top-btn" aria-label="뒤로가기">‹</button>
+    <button id="backBtn" class="top-btn" type="button" aria-label="뒤로가기">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
     <div class="top-title"><b id="pageTitle">작업안전 체크리스트</b><small id="pageSub" hidden></small></div>
-    <button id="homeBtn" class="top-btn" aria-label="홈">⌂</button>
+    <button id="homeBtn" class="top-btn" type="button" aria-label="홈">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9 21v-7h6v7"/></svg>
+    </button>
   </header>
   <main id="app" class="app"></main>
-  <nav class="bottom-nav">
-    <a href="#/checklists" data-route="home"><span>⌂</span><b>홈</b></a>
-    <a href="#/checklists/picker" data-route="picker"><span>＋</span><b>작성</b></a>
-    <a href="#/checklists/drafts" data-route="drafts"><span>▤</span><b>임시저장</b></a>
-    <a href="#/checklists/calendar" data-route="calendar"><span>▦</span><b>보관</b></a>
+  <nav class="bottom-nav" aria-label="주요 메뉴">
+    <a href="#/checklists" data-route="home" aria-label="홈">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9 21v-7h6v7"/></svg></span><b>홈</b>
+    </a>
+    <a href="#/checklists/picker" data-route="picker" aria-label="체크리스트 작성">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><b>작성</b>
+    </a>
+    <a href="#/checklists/drafts" data-route="drafts" aria-label="임시저장 문서">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h6"/><path d="M9 3h6v4H9z"/><path d="M7 5H5.5A1.5 1.5 0 0 0 4 6.5v14A1.5 1.5 0 0 0 5.5 22h13a1.5 1.5 0 0 0 1.5-1.5v-14A1.5 1.5 0 0 0 18.5 5H17"/><path d="M8 12h8M8 16h6"/></svg></span><b>임시저장</b>
+    </a>
+    <a href="#/checklists/calendar" data-route="calendar" aria-label="완료 문서 보관함">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v3M18 3v3"/><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg></span><b>보관</b>
+    </a>
   </nav>
   <!-- A4 PDF 엔진: 정적 캔버스 → jsPDF 안전 분할 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="data/research-checklists-v1.js?v=20260724r8"></script>
-  <script src="components/research-checklist.js?v=20260724r8"></script>
-  <script src="app.js?v=20260724r8"></script>
+  <script src="data/research-checklists-v1.js?v=20260725r1"></script>
+  <script src="components/research-checklist.js?v=20260725r1"></script>
+  <script src="app.js?v=20260725r1"></script>
 </body>
 </html>

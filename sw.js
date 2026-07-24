@@ -1,16 +1,20 @@
-const CACHE='safety-checklist-standalone-v1.7.0-r7';
+const CACHE='safety-checklist-standalone-v1.8.0-r1';
 const PDF_CACHE='safety-checklist-pdf-downloads-v1';
 const CORE=[
   './',
   './index.html',
-  './app.css?v=20260724r8',
-  './styles-checklist.css?v=20260724r8',
-  './app.js?v=20260724r8',
-  './data/research-checklists-v1.js?v=20260724r8',
-  './components/research-checklist.js?v=20260724r8',
+  './app.css?v=20260725r1',
+  './styles-checklist.css?v=20260725r1',
+  './app.js?v=20260725r1',
+  './data/research-checklists-v1.js?v=20260725r1',
+  './components/research-checklist.js?v=20260725r1',
   './manifest.webmanifest',
   './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-512.png',
+  './assets/menu/clipboard.png',
+  './assets/menu/tbm.png',
+  './assets/menu/risk.png',
+  './assets/menu/calendar-3d.png'
 ];
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));

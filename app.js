@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  window.APP_VERSION='1.7.0';
+  window.APP_VERSION='1.8.0';
   const app=document.getElementById('app');
   const title=document.getElementById('pageTitle');
   const sub=document.getElementById('pageSub');
@@ -13,7 +13,14 @@
   };
   document.getElementById('homeBtn').onclick=()=>location.hash='#/checklists';
   document.getElementById('backBtn').onclick=()=>{ if(history.length>1) history.back(); else location.hash='#/checklists'; };
-  function activeNav(key){ document.querySelectorAll('.bottom-nav a').forEach(a=>a.classList.toggle('active',a.dataset.route===key)); }
+  function activeNav(key){
+    document.querySelectorAll('.bottom-nav a').forEach(a=>{
+      const active=a.dataset.route===key;
+      a.classList.toggle('active',active);
+      if(active) a.setAttribute('aria-current','page');
+      else a.removeAttribute('aria-current');
+    });
+  }
   async function route(){
     const hash=location.hash||'#/checklists';
     try{
@@ -34,7 +41,7 @@
       refreshing=true;
       location.reload();
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260724r8',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260725r1',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{}));
   }
   route();
 })();
