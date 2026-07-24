@@ -14,8 +14,8 @@
   const STORE = 'documents';
   const FALLBACK_KEY = 'POWER_TBM_RESEARCH_CHECKLIST_FALLBACK_V1';
   const ACTIVE_DRAFT_KEY = 'POWER_TBM_RESEARCH_CHECKLIST_ACTIVE_DRAFT_V1';
-  const PDF_VERSION = 'R&D 체크리스트 Version 1.0 / 2026.05';
-  const PDF_RENDER_VERSION = 'standalone-image-pdf-r6-peer-compact-20260724';
+  const PDF_VERSION = '전력연구원 작업안전 체크리스트';
+  const PDF_RENDER_VERSION = 'standalone-image-pdf-r8-branding-20260724';
   let dbPromise = null;
   let writerCleanup = null;
 
@@ -363,24 +363,30 @@
 
   function renderChecklistMenuPage(){
     if(writerCleanup){ try{ writerCleanup(); }catch(e){} writerCleanup=null; }
-    setPageTop('작업안전 체크리스트','');
+    setPageTop('전력연구원 작업안전 체크리스트','');
     const node=section(`
       <div class="checklist-hero compact">
-        <div class="checklist-hero-icon">✓</div>
-        <div class="checklist-hero-main">
+        <div class="checklist-hero-mark">
+          <span class="checklist-hero-chip">한국전력 전력연구원</span>
           <h2>작업안전 체크리스트</h2>
-          <span class="checklist-hero-count">표준공정 ${DATA.length}종</span>
+          <p class="checklist-hero-sub">표준공정 96종 기반 페이퍼리스 안전점검</p>
+          <div class="checklist-hero-pills">
+            <span>표준공정 ${DATA.length}종</span>
+            <span>전자서명</span>
+            <span>PDF 보관</span>
+          </div>
         </div>
+        <div class="checklist-hero-icon">✓</div>
       </div>
       <div class="checklist-menu-cards">
         <a class="checklist-menu-card primary" href="#/checklists/new">
-          <span class="menu-symbol">✎</span><span><b>새 체크리스트 작성</b></span><i>›</i>
+          <span class="menu-symbol">📝</span><span><b>새 체크리스트 작성</b><em>작업안전 체크리스트를 바로 작성합니다.</em></span><i>›</i>
         </a>
         <a class="checklist-menu-card" href="#/checklists/drafts">
-          <span class="menu-symbol">▤</span><span><b>임시저장 문서</b></span><strong id="checklistDraftCount">-</strong><i>›</i>
+          <span class="menu-symbol">📂</span><span><b>임시저장 문서</b><em>작성 중인 문서를 이어서 확인합니다.</em></span><strong id="checklistDraftCount">-</strong><i>›</i>
         </a>
         <a class="checklist-menu-card" href="#/checklists/calendar">
-          <span class="menu-symbol">▦</span><span><b>완료 문서·캘린더</b></span><strong id="checklistCompleteCount">-</strong><i>›</i>
+          <span class="menu-symbol">🗂</span><span><b>완료 문서·캘린더</b><em>완료 문서 조회와 PDF 저장·공유</em></span><strong id="checklistCompleteCount">-</strong><i>›</i>
         </a>
       </div>
     `,'panel checklist-page checklist-menu-page');
@@ -397,7 +403,7 @@
 
   function renderChecklistPickerPage(){
     if(writerCleanup){ try{ writerCleanup(); }catch(e){} writerCleanup=null; }
-    setPageTop('체크리스트 선택','');
+    setPageTop('전력연구원 체크리스트 선택','');
     const majors=Array.from(new Map(DATA.map(x=>[x.majorCode,x.majorCategory])).entries());
     const node=section(`
       <div class="checklist-picker-head">
@@ -489,7 +495,7 @@
       <div class="checklist-reference-grid">
         <details class="checklist-reference-card">
           <summary><span>작업절차도</span><small>${template.procedures.length}단계</small></summary>
-          <ol>${template.procedures.map(x=>`<li>${esc(x.replace(/^\d+\.\s*/,''))}</li>`).join('')}</ol>
+          <ul>${template.procedures.map(x=>`<li>${esc(x.replace(/^\d+\.\s*/,''))}</li>`).join('')}</ul>
         </details>
         <details class="checklist-reference-card danger">
           <summary><span>위험 요인</span><small>${template.hazards.length}개</small></summary>
@@ -729,7 +735,7 @@
     let draftId=normalizeCode(rawDraftId || parsed.draftId);
     const template=DATA_BY_CODE.get(code);
     if(!template){
-      setPageTop('체크리스트 작성','');
+      setPageTop('전력연구원 체크리스트 작성','');
       mountNode(section('<div class="checklist-empty">선택한 체크리스트를 찾을 수 없습니다.<br><a href="#/checklists/new">96종 목록으로 돌아가기</a></div>','panel checklist-page'));
       return;
     }
@@ -737,7 +743,7 @@
       draftId=uid('draft');
       history.replaceState(null,document.title,`#/checklists/write/${encodeURIComponent(code)}/${encodeURIComponent(draftId)}`);
     }
-    setPageTop('체크리스트 작성','');
+    setPageTop('전력연구원 체크리스트 작성','');
     const loading=section('<div class="checklist-loading"><span></span>작성 문서를 불러오는 중입니다.</div>','panel checklist-page');
     mountNode(loading);
 
@@ -953,7 +959,7 @@
 
   function renderChecklistDraftsPage(){
     if(writerCleanup){ try{ writerCleanup(); }catch(e){} writerCleanup=null; }
-    setPageTop('임시저장 문서','');
+    setPageTop('전력연구원 임시저장 문서','');
     const node=section('<div class="checklist-loading"><span></span>임시저장 문서를 확인하는 중입니다.</div>','panel checklist-page');
     mountNode(node);
     getAllDocs().then(rows=>{
@@ -1001,7 +1007,7 @@
   }
   function renderChecklistCalendarPage(){
     if(writerCleanup){ try{ writerCleanup(); }catch(e){} writerCleanup=null; }
-    setPageTop('완료 문서·캘린더','');
+    setPageTop('전력연구원 완료 문서·캘린더','');
     const node=section('<div class="checklist-loading"><span></span>완료 문서를 불러오는 중입니다.</div>','panel checklist-page checklist-calendar-page');
     mountNode(node);
     getAllDocs().then(rows=>{
@@ -1089,13 +1095,13 @@
         <td>${esc(statusLabel(r.status))}</td><td>${esc(r.note || '')}${r.photo ? `<div class="pdf-photo"><img src="${esc(r.photo)}" alt=""></div>` : ''}</td>
       </tr>`;
     }).join('');
-    const procedures=template.procedures.map(x=>`<li>${esc(x)}</li>`).join('');
+    const procedures=template.procedures.map(x=>`<li>${esc(String(x).replace(/^\d+\.\s*/,''))}</li>`).join('');
     const hazards=template.hazards.map(x=>`<li>${esc(x)}</li>`).join('');
     const docs=template.requiredDocuments.map((x,i)=>`<li><b>${record.recordChecks && record.recordChecks[i] ? '☑' : '☐'}</b> ${esc(x)}</li>`).join('');
     return `
       <div class="checklist-pdf-sheet">
         <header class="pdf-title">
-          <h1>작업안전 체크리스트</h1>
+          <h1>전력연구원 작업안전 체크리스트</h1>
           <div>${esc(template.code)} · ${esc(template.majorCategory)} / ${esc(template.middleCategory)}</div>
         </header>
         <table class="pdf-info-table">
@@ -1104,8 +1110,8 @@
           <tr><th>담당자</th><td>${esc(record.meta && record.meta.manager)}</td><th>책임자(PL)</th><td>${esc(record.meta && record.meta.responsible)}</td></tr>
         </table>
         <div class="pdf-two-col">
-          <section><h2>작업절차도</h2><ol>${procedures}</ol></section>
-          <section class="hazard"><h2>위험 요인</h2><ul>${hazards}</ul></section>
+          <section><h2>작업절차도</h2><ul class="pdf-procedure-list">${procedures}</ul></section>
+          <section class="hazard"><h2>위험 요인</h2><ul class="pdf-hazard-list">${hazards}</ul></section>
         </div>
         <section class="pdf-ppe"><b>필수 안전보호구</b><span>${esc(template.ppe)}</span></section>
         <h2 class="pdf-check-title">핵심 Check Point</h2>
@@ -1120,8 +1126,7 @@
           <div><b>담당자 : ${esc(record.meta && record.meta.manager)}</b>${record.signatures && record.signatures.manager ? `<img src="${esc(record.signatures.manager)}" alt="담당자 서명">` : '<span>서명 없음</span>'}</div>
           <div><b>책임자(PL) : ${esc(record.meta && record.meta.responsible)}</b>${record.signatures && record.signatures.responsible ? `<img src="${esc(record.signatures.responsible)}" alt="책임자 서명">` : '<span>서명 없음</span>'}</div>
         </div>
-        <footer>
-          <span>${esc(PDF_VERSION)} · 원본 ${template.sourcePage}페이지</span>
+        <footer class="single-end">
           <span>완료 ${esc(displayDateTime(record.completedAt || Date.now()))} · 이상 ${Number(record.issueCount || 0)}건</span>
         </footer>
       </div>`;
@@ -1621,7 +1626,7 @@
   async function renderChecklistViewPage(rawId){
     if(writerCleanup){ try{ writerCleanup(); }catch(e){} writerCleanup=null; }
     const id=normalizeCode(rawId || parseViewHash());
-    setPageTop('완료 체크리스트','');
+    setPageTop('전력연구원 완료 체크리스트','');
     const node=section('<div class="checklist-loading"><span></span>완료 문서를 불러오는 중입니다.</div>','panel checklist-page checklist-view-page');
     mountNode(node);
     const record=await getDoc(id);
