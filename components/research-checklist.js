@@ -15,7 +15,7 @@
   const FALLBACK_KEY = 'POWER_TBM_RESEARCH_CHECKLIST_FALLBACK_V1';
   const ACTIVE_DRAFT_KEY = 'POWER_TBM_RESEARCH_CHECKLIST_ACTIVE_DRAFT_V1';
   const PDF_VERSION = 'R&D 체크리스트 Version 1.0 / 2026.05';
-  const PDF_RENDER_VERSION = 'standalone-pdf-r3-20260724';
+  const PDF_RENDER_VERSION = 'standalone-image-pdf-r4-20260724';
   let dbPromise = null;
   let writerCleanup = null;
 
@@ -35,6 +35,20 @@
     if(Number.isNaN(x.getTime())) return '';
     return `${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}T${pad(x.getHours())}:${pad(x.getMinutes())}`;
   }
+  function splitLocalDateTime(value){
+    const raw=String(value == null ? '' : value).trim();
+    const exact=raw.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}:\d{2})/);
+    if(exact) return {date:exact[1],time:exact[2]};
+    if(!raw) return {date:'',time:''};
+    const parsed=new Date(raw);
+    if(Number.isNaN(parsed.getTime())) return {date:'',time:''};
+    return {date:localDate(parsed),time:`${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`};
+  }
+  function combineLocalDateTime(dateValue,timeValue){
+    const date=String(dateValue || '').trim();
+    const time=String(timeValue || '').trim();
+    return date && time ? `${date}T${time}` : '';
+  }
   function displayDateTime(v){
     const d = new Date(v);
     if(Number.isNaN(d.getTime())) return String(v || '-').replace('T',' ');
@@ -44,16 +58,18 @@
     const ua=String(navigator.userAgent || '');
     return /iPad|iPhone|iPod/i.test(ua) || (navigator.platform==='MacIntel' && Number(navigator.maxTouchPoints || 0)>1);
   }
+  function isAndroidLike(){
+    return /Android/i.test(String(navigator.userAgent || ''));
+  }
   function waitForPaint(){
     return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   }
   function preparePdfTarget(){
-    if(!isIOSLike()) return null;
     try{
       const win=window.open('about:blank','_blank');
       if(!win) return null;
       win.document.open();
-      win.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PDF 준비 중</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;background:#f4f7fa;color:#173c56}div{text-align:center;padding:28px}b{display:block;font-size:18px;margin-bottom:8px}small{color:#66788a;line-height:1.6}</style></head><body><div><b>문서를 준비하고 있습니다.</b><small>잠시 후 PDF 저장·공유 화면이 열립니다.</small></div></body></html>');
+      win.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PDF 준비 중</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;background:#f4f7fa;color:#173c56}div{text-align:center;padding:28px}b{display:block;font-size:18px;margin-bottom:8px}small{color:#66788a;line-height:1.6}</style></head><body><div><b>PDF 미리보기를 준비하고 있습니다.</b><small>완료되면 이 창에 A4 문서가 표시됩니다.</small></div></body></html>');
       win.document.close();
       return win;
     }catch(e){ return null; }
@@ -520,6 +536,7 @@
 
   function renderInfoFields(record,template){
     const m=record.meta;
+    const dt=splitLocalDateTime(m.datetime);
     return `
       <div class="checklist-section-card checklist-info-card">
         <div class="section-card-head">
@@ -530,14 +547,14 @@
           <label class="wide">작업공종(Code)<input type="text" value="${esc(template.code)}" readonly></label>
           <label class="wide">작업명<input type="text" value="${esc(template.workName)}" readonly></label>
           <label class="wide">공정명(과제번호)<input id="clProjectName" data-meta="projectName" type="text" value="${esc(m.projectName)}" placeholder="예: R25XX01 암모니아 혼소 발전 실증"></label>
-          <label class="date-time-field">작업일시
-            <span class="compact-datetime-control" id="clDatetimeControl">
-              <span class="compact-datetime-value" id="clDatetimeDisplay">${esc(m.datetime ? displayDateTime(m.datetime) : '날짜·시간 선택')}</span>
-              <span class="compact-datetime-action" aria-hidden="true">변경</span>
-              <input id="clDatetime" data-meta="datetime" class="native-datetime-overlay" type="datetime-local" value="${esc(m.datetime)}" aria-label="작업일시 선택">
-            </span>
-          </label>
-          <label>작업장소<input data-meta="location" type="text" value="${esc(m.location)}" placeholder="실험실·현장명"></label>
+          <div class="checklist-field date-time-field">
+            <span class="field-caption" id="clDatetimeLabel">작업일시</span>
+            <div class="datetime-parts" role="group" aria-labelledby="clDatetimeLabel">
+              <span class="datetime-part-shell date-part"><input id="clWorkDate" data-datetime-part="date" type="date" value="${esc(dt.date)}" aria-label="작업일자"></span>
+              <span class="datetime-part-shell time-part"><input id="clWorkTime" data-datetime-part="time" type="time" value="${esc(dt.time)}" aria-label="작업시간"></span>
+            </div>
+          </div>
+          <label class="location-field">작업장소<input data-meta="location" type="text" value="${esc(m.location)}" placeholder="실험실·현장명"></label>
           <label>회사·연구소<input data-meta="company" type="text" value="${esc(m.company)}" placeholder="회사 또는 연구소"></label>
           <label>부서<input data-meta="department" type="text" value="${esc(m.department)}" placeholder="부서명"></label>
           <label>담당자<input data-meta="manager" type="text" value="${esc(m.manager)}" placeholder="성명"></label>
@@ -807,6 +824,11 @@
         const k=el.getAttribute('data-meta');
         record.meta[k]=String(el.value == null ? '' : el.value);
       });
+      const datePart=node.querySelector('[data-datetime-part="date"]');
+      const timePart=node.querySelector('[data-datetime-part="time"]');
+      if(datePart || timePart){
+        record.meta.datetime=combineLocalDateTime(datePart && datePart.value,timePart && timePart.value);
+      }
       node.querySelectorAll('[data-record-check]').forEach(el=>{
         record.recordChecks[el.getAttribute('data-record-check')]=!!el.checked;
       });
@@ -847,6 +869,13 @@
       if(ans) ans.textContent=String(s.answered);
       if(issue) issue.textContent=String(s.issues);
     }
+    function syncDateTimeInputs(value){
+      const parts=splitLocalDateTime(value);
+      const datePart=node.querySelector('[data-datetime-part="date"]');
+      const timePart=node.querySelector('[data-datetime-part="time"]');
+      if(datePart) datePart.value=parts.date;
+      if(timePart) timePart.value=parts.time;
+    }
     function updateSignNames(){
       const m=node.querySelector('[data-meta="manager"]');
       const r=node.querySelector('[data-meta="responsible"]');
@@ -855,16 +884,14 @@
       if(a) a.textContent=String(m && m.value || '성명 미입력');
       if(b) b.textContent=String(r && r.value || '성명 미입력');
     }
-    function updateDatetimeDisplay(){
-      const input=node.querySelector('#clDatetime');
-      const display=node.querySelector('#clDatetimeDisplay');
-      if(display) display.textContent=input && input.value ? displayDateTime(input.value) : '날짜·시간 선택';
-    }
     node.querySelectorAll('[data-meta]').forEach(el=>{
-      el.addEventListener('input',()=>{ collect(); updateSignNames(); if(el.id==='clDatetime') updateDatetimeDisplay(); scheduleSave(); });
-      el.addEventListener('change',()=>{ collect(); updateSignNames(); if(el.id==='clDatetime') updateDatetimeDisplay(); scheduleSave(); });
+      el.addEventListener('input',()=>{ collect(); updateSignNames(); scheduleSave(); });
+      el.addEventListener('change',()=>{ collect(); updateSignNames(); scheduleSave(); });
     });
-    updateDatetimeDisplay();
+    node.querySelectorAll('[data-datetime-part]').forEach(el=>{
+      el.addEventListener('input',()=>{ collect(); scheduleSave(); });
+      el.addEventListener('change',()=>{ collect(); scheduleSave(); });
+    });
     node.querySelectorAll('[data-record-check]').forEach(el=>el.addEventListener('change',scheduleSave));
 
     node.querySelectorAll('.checklist-cp').forEach(card=>{
@@ -939,16 +966,18 @@
       };
       Object.keys(map).forEach(k=>{
         if(map[k]) record.meta[k]=map[k];
+        if(k==='datetime') return;
         const el=node.querySelector(`[data-meta="${k}"]`);
         if(el && map[k]) el.value=map[k];
       });
+      if(map.datetime) syncDateTimeInputs(map.datetime);
       record.meta.tbmLinked=true; record.meta.tbmLinkedAt=Date.now();
       const note=node.querySelector('#checklistTbmLinkNote');
       if(note){
         note.classList.add('linked');
         note.innerHTML='✓ TBM 회의록 기본정보를 다시 불러왔습니다. <a href="#/tbm/minutes">TBM 회의록 열기</a>';
       }
-      updateSignNames(); updateDatetimeDisplay(); scheduleSave(); flash('TBM 기본정보를 반영했습니다.','ok');
+      updateSignNames(); scheduleSave(); flash('TBM 기본정보를 반영했습니다.','ok');
     });
 
     const validation=node.querySelector('#checklistValidationBox');
@@ -993,19 +1022,12 @@
         // 이전 draft 키가 달라진 경우 삭제
         if(draftId!==record.id) await deleteDoc(draftId);
         try{
-          if(isIOSLike()){
-            delete record.pdfBlob;
-            record.pdfRenderVersion='ios-native-print-r2';
+          const blob=await createPdfBlob(record,template);
+          if(blob){
+            record.pdfBlob=blob;
+            record.pdfRenderVersion=PDF_RENDER_VERSION;
             record.pdfError='';
             record=await putDoc(record);
-          }else{
-            const blob=await createPdfBlob(record,template);
-            if(blob){
-              record.pdfBlob=blob;
-              record.pdfRenderVersion=PDF_RENDER_VERSION;
-              record.pdfError='';
-              record=await putDoc(record);
-            }
           }
         }catch(e){
           record.pdfError=String(e && e.message || e || '');
@@ -1096,7 +1118,7 @@
             <div class="completed-badges"><span>확인 ${Number(r.answeredCount || 0)}</span><span class="${Number(r.issueCount)>0 ? 'issue' : ''}">이상 ${Number(r.issueCount || 0)}</span><span>해당없음 ${Number(r.naCount || 0)}</span></div>
             <div class="doc-card-actions">
               <a href="#/checklists/view/${encodeURIComponent(r.id)}">문서 보기</a>
-              <button type="button" data-pdf="${esc(r.id)}">${isIOSLike() ? 'PDF 저장·공유' : 'PDF 저장'}</button>
+              <button type="button" data-pdf="${esc(r.id)}">PDF 저장·공유</button>
               <button type="button" class="danger-text" data-delete="${esc(r.id)}">삭제</button>
             </div>
           </article>`;
@@ -1120,7 +1142,7 @@
         node.querySelector('#clNextMonth').onclick=()=>{ month++; if(month>11){month=0;year++;} selected=`${year}-${pad(month+1)}-01`; draw(); };
         node.querySelectorAll('[data-date]').forEach(btn=>btn.onclick=()=>{ selected=btn.getAttribute('data-date'); draw(); });
         node.querySelectorAll('[data-pdf]').forEach(btn=>btn.onclick=async()=>{
-          const pdfTarget=preparePdfTarget();
+          const pdfTarget=null;
           const id=btn.getAttribute('data-pdf');
           const record=records.find(r=>r.id===id) || await getDoc(id);
           const template=record && DATA_BY_CODE.get(record.templateCode);
@@ -1204,7 +1226,7 @@
       const done=()=>resolve();
       img.addEventListener('load',done,{once:true});
       img.addEventListener('error',done,{once:true});
-      setTimeout(done,4000);
+      setTimeout(done,5000);
     })));
   }
   async function waitFonts(){
@@ -1214,78 +1236,273 @@
       }
     }catch(e){}
   }
-  function nativePrintHtml(record,template){
-    const styleLinks=Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-      .map(link=>`<link rel="stylesheet" href="${esc(link.href)}">`).join('');
-    return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(pdfFilename(record,template))}</title>${styleLinks}<style>
-      html,body{margin:0!important;background:#fff!important;color:#111827!important}
-      body{padding:0!important;overflow:auto!important}
-      .native-print-help{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:#173c56;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;font-size:12px}
-      .native-print-help button{min-height:38px;padding:0 14px;border:0;border-radius:10px;background:#fff;color:#173c56;font-weight:900}
-      .native-print-document{border:0!important;border-radius:0!important;background:#fff!important;padding:0!important;overflow:visible!important}
-      .native-print-document .checklist-pdf-sheet{width:794px;min-width:794px;max-width:none;margin:0 auto;padding:18px!important}
-      @media print{.native-print-help{display:none!important}.native-print-document{position:absolute!important;left:0!important;top:0!important}.native-print-document .checklist-pdf-sheet{width:100%!important;min-width:0!important;margin:0!important}}
-    </style></head><body><div class="native-print-help"><span>인쇄 화면에서 <b>공유 → 파일에 저장</b>을 선택하면 PDF로 보관됩니다.</span><button type="button" onclick="window.print()">PDF 저장·공유</button></div><div class="checklist-view-document native-print-document">${printableHtml(record,template)}</div></body></html>`;
-  }
-  function openNativePrint(record,template,targetWindow){
-    const win=targetWindow && !targetWindow.closed ? targetWindow : window.open('about:blank','_blank');
-    if(!win) throw new Error('팝업이 차단되었습니다. Safari 설정에서 팝업 차단을 잠시 해제해 주세요.');
-    win.document.open();
-    win.document.write(nativePrintHtml(record,template));
-    win.document.close();
-    const startPrint=async()=>{
-      try{
-        const images=Array.from(win.document.images || []);
-        await Promise.all(images.map(img=>img.complete ? Promise.resolve() : new Promise(resolve=>{
-          img.addEventListener('load',resolve,{once:true});
-          img.addEventListener('error',resolve,{once:true});
-          setTimeout(resolve,2500);
-        })));
-        if(win.document.fonts && win.document.fonts.ready){
-          await Promise.race([win.document.fonts.ready,new Promise(resolve=>setTimeout(resolve,1200))]);
-        }
-        setTimeout(()=>{ try{ win.focus(); win.print(); }catch(e){} },250);
-      }catch(e){ try{ win.focus(); win.print(); }catch(err){} }
-    };
-    if(win.document.readyState==='complete') startPrint();
-    else win.addEventListener('load',startPrint,{once:true});
-    flash('인쇄 미리보기에서 공유 → 파일에 저장을 선택하세요.','ok');
+  function getJsPdfCtor(){
+    try{
+      if(window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+      if(window.jsPDF) return window.jsPDF;
+    }catch(e){}
     return null;
   }
+  function ensureImagePdfLibraries(){
+    return typeof window.html2canvas==='function' && !!getJsPdfCtor();
+  }
+  async function loadCanvasImage(src){
+    return new Promise(resolve=>{
+      try{
+        const img=new Image();
+        img.decoding='async';
+        img.onload=()=>resolve(img);
+        img.onerror=()=>resolve(null);
+        img.src=src;
+        if(img.complete && img.naturalWidth) resolve(img);
+        setTimeout(()=>resolve(img.complete && img.naturalWidth ? img : null),5000);
+      }catch(e){ resolve(null); }
+    });
+  }
+  async function overlayRenderedImages(source,canvas){
+    try{
+      const sourceRect=source.getBoundingClientRect();
+      if(!sourceRect || !(sourceRect.width>0) || !(sourceRect.height>0)) return;
+      const ctx=canvas.getContext('2d');
+      if(!ctx) return;
+      const ratioX=canvas.width/sourceRect.width;
+      const ratioY=canvas.height/sourceRect.height;
+      const images=Array.from(source.querySelectorAll('img'));
+      for(const node of images){
+        try{
+          const src=String(node.currentSrc || node.src || '');
+          if(!src) continue;
+          const rect=node.getBoundingClientRect();
+          if(!rect || rect.width<1 || rect.height<1) continue;
+          const img=(node.complete && node.naturalWidth) ? node : await loadCanvasImage(src);
+          if(!img || !(img.naturalWidth>0)) continue;
+          const x=(rect.left-sourceRect.left)*ratioX;
+          const y=(rect.top-sourceRect.top)*ratioY;
+          const w=rect.width*ratioX;
+          const h=rect.height*ratioY;
+          ctx.drawImage(img,x,y,w,h);
+        }catch(e){}
+      }
+    }catch(e){}
+  }
+  function collectPdfSafeBreakpoints(source,canvas){
+    try{
+      const rootRect=source.getBoundingClientRect();
+      const cssHeight=Math.max(1,rootRect.height || source.scrollHeight || 1);
+      const ratioY=canvas.height/cssHeight;
+      const points=[];
+      const nodes=Array.from(source.querySelectorAll([
+        '.pdf-title',
+        '.pdf-info-table tr',
+        '.pdf-two-col',
+        '.pdf-two-col > section',
+        '.pdf-ppe',
+        '.pdf-check-title',
+        '.pdf-check-table thead',
+        '.pdf-check-table tbody tr',
+        '.pdf-bottom-grid',
+        '.pdf-bottom-grid > section',
+        '.pdf-signatures',
+        '.checklist-pdf-sheet footer'
+      ].join(',')));
+      nodes.forEach(node=>{
+        try{
+          const rect=node.getBoundingClientRect();
+          if(!rect || rect.height<=0) return;
+          const top=Math.round((rect.top-rootRect.top)*ratioY);
+          const bottom=Math.round((rect.bottom-rootRect.top)*ratioY);
+          if(top>2 && top<canvas.height-2) points.push(top);
+          if(bottom>2 && bottom<canvas.height-2) points.push(bottom);
+        }catch(e){}
+      });
+      return Array.from(new Set(points)).sort((a,b)=>a-b);
+    }catch(e){ return []; }
+  }
+  function addCanvasToPdfPages(pdf,canvas,safeBreakpoints){
+    const pageW=pdf.internal.pageSize.getWidth();
+    const pageH=pdf.internal.pageSize.getHeight();
+    const marginX=7;
+    const marginY=isAndroidLike() ? 4 : 6;
+    const drawW=pageW-(marginX*2);
+    const drawH=pageH-(marginY*2);
+    const breaks=Array.from(safeBreakpoints || [])
+      .map(v=>Math.max(1,Math.min(canvas.height-1,Math.round(Number(v)||0))))
+      .filter(v=>v>1)
+      .sort((a,b)=>a-b)
+      .filter((v,i,arr)=>i===0 || v!==arr[i-1]);
+
+    const basePagePxH=Math.max(1,Math.floor(canvas.width*drawH/drawW));
+    let pagePxH=basePagePxH;
+    let canvasDrawW=drawW;
+    let plannedCuts=[];
+
+    // Power TBM과 같은 방식: 마지막 장에 몇 줄만 남는 경우 최대 6% 안에서
+    // 문서 전체 폭을 살짝 줄여 앞 장의 남는 공간을 사용합니다.
+    const basePageTotal=Math.ceil(canvas.height/basePagePxH);
+    if(basePageTotal>1){
+      const desiredPages=basePageTotal-1;
+      const candidateCuts=[];
+      let previousCut=0;
+      let canPlan=true;
+      for(let pageIndex=1;pageIndex<desiredPages;pageIndex++){
+        const ideal=(canvas.height*pageIndex)/desiredPages;
+        let best=0;
+        let bestDistance=Infinity;
+        for(const point of breaks){
+          if(point<=previousCut+8 || point>=canvas.height-8) continue;
+          const distance=Math.abs(point-ideal);
+          if(distance<bestDistance){ best=point; bestDistance=distance; }
+        }
+        if(!best){ canPlan=false; break; }
+        candidateCuts.push(best);
+        previousCut=best;
+      }
+      if(canPlan){
+        const edges=[0].concat(candidateCuts,[canvas.height]);
+        let maxSegment=0;
+        for(let i=1;i<edges.length;i++) maxSegment=Math.max(maxSegment,edges[i]-edges[i-1]);
+        const neededDrawW=(canvas.width*drawH)/Math.max(1,maxSegment);
+        if(neededDrawW>=drawW*0.94 && neededDrawW<=drawW){
+          canvasDrawW=neededDrawW;
+          pagePxH=Math.max(1,Math.ceil(maxSegment));
+          plannedCuts=candidateCuts;
+        }
+      }
+    }
+
+    const drawX=(pageW-canvasDrawW)/2;
+    let yPx=0;
+    let pageCount=0;
+    while(yPx<canvas.height-1){
+      const targetBottom=Math.min(canvas.height,yPx+pagePxH);
+      let sliceBottom=(pageCount<plannedCuts.length) ? plannedCuts[pageCount] : targetBottom;
+      if(pageCount>=plannedCuts.length && targetBottom<canvas.height){
+        const minSafeBottom=yPx+Math.floor(pagePxH*0.58);
+        let earlierSafeBottom=0;
+        for(let i=breaks.length-1;i>=0;i--){
+          const point=breaks[i];
+          if(point>targetBottom) continue;
+          if(point>minSafeBottom){ sliceBottom=point; break; }
+          if(point>yPx+12){ earlierSafeBottom=point; break; }
+        }
+        if(sliceBottom===targetBottom && earlierSafeBottom) sliceBottom=earlierSafeBottom;
+      }
+      if(sliceBottom<=yPx+12) sliceBottom=targetBottom;
+      const sliceH=Math.max(1,sliceBottom-yPx);
+      const slice=document.createElement('canvas');
+      slice.width=canvas.width;
+      slice.height=sliceH;
+      const ctx=slice.getContext('2d');
+      if(ctx){
+        ctx.fillStyle='#ffffff';
+        ctx.fillRect(0,0,slice.width,slice.height);
+        ctx.drawImage(canvas,0,yPx,canvas.width,sliceH,0,0,canvas.width,sliceH);
+      }
+      const imageData=slice.toDataURL('image/jpeg',0.94);
+      const imageH=Math.min(drawH,(sliceH*canvasDrawW)/canvas.width);
+      if(pageCount>0) pdf.addPage();
+      pdf.addImage(imageData,'JPEG',drawX,marginY,canvasDrawW,imageH,undefined,'FAST');
+      pageCount++;
+      yPx+=sliceH;
+    }
+    return pageCount;
+  }
   async function createPdfBlob(record,template){
-    if(typeof window.html2pdf !== 'function') throw new Error('PDF 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.');
+    if(!ensureImagePdfLibraries()) throw new Error('PDF 라이브러리를 불러오지 못했습니다. 인터넷 연결 후 앱을 다시 열어 주세요.');
+    const JsPDF=getJsPdfCtor();
     const host=document.createElement('div');
     const cover=document.createElement('div');
     host.className='checklist-pdf-render-host';
+    host.style.position='absolute';
+    host.style.left='0';
+    host.style.top='0';
+    host.style.width='794px';
+    host.style.height='0';
+    host.style.margin='0';
+    host.style.padding='0';
+    host.style.overflow='visible';
+    host.style.zIndex='-2147483647';
+    host.style.pointerEvents='none';
+    host.style.opacity='1';
+    host.style.visibility='visible';
     host.innerHTML=printableHtml(record,template);
     cover.className='checklist-pdf-generation-cover';
-    cover.innerHTML='<span></span><b>PDF 문서를 만드는 중입니다.</b><small>화면을 닫지 말고 잠시 기다려 주세요.</small>';
+    cover.innerHTML='<span></span><b>Power TBM 방식으로 PDF를 만드는 중입니다.</b><small>A4 폭 맞춤과 페이지 분할을 적용하고 있습니다.</small>';
     document.body.classList.add('checklist-pdf-generating');
     document.body.appendChild(host);
     document.body.appendChild(cover);
     try{
+      const source=host.firstElementChild;
+      if(!source) throw new Error('PDF 내용을 준비하지 못했습니다.');
+      source.classList.add('checklist-pdf-snapshot');
+      source.style.setProperty('width','794px','important');
+      source.style.setProperty('max-width','794px','important');
+      source.style.setProperty('min-width','794px','important');
+      source.style.setProperty('position','relative','important');
+      source.style.setProperty('left','0','important');
+      source.style.setProperty('top','0','important');
+      source.style.setProperty('margin','0','important');
+      source.style.setProperty('transform','none','important');
+      source.style.setProperty('transform-origin','0 0','important');
+
       await waitFonts();
       await waitImages(host);
       await waitForPaint();
-      const source=host.firstElementChild;
-      if(!source) throw new Error('PDF 내용을 준비하지 못했습니다.');
-      const sourceWidth=Math.max(794,Math.ceil(source.scrollWidth || source.offsetWidth || 0));
-      const sourceHeight=Math.max(1,Math.ceil(source.scrollHeight || source.offsetHeight || 0));
-      const maxPixels=isIOSLike() ? 7200000 : 14500000;
-      const maxScale=isIOSLike() ? 1.3 : 1.7;
-      const scale=Math.max(1,Math.min(maxScale,Math.sqrt(maxPixels/Math.max(1,sourceWidth*sourceHeight))));
-      const worker=window.html2pdf().set({
-        margin:[7,7,8,7],
-        filename:pdfFilename(record,template),
-        image:{type:'jpeg',quality:0.94},
-        html2canvas:{
-          scale:scale,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,
-          imageTimeout:8000,scrollX:0,scrollY:0,windowWidth:sourceWidth
-        },
-        jsPDF:{unit:'mm',format:'a4',orientation:'portrait',compress:true},
-        pagebreak:{mode:['css','legacy'],avoid:['.pdf-signatures','.pdf-bottom-grid section']}
-      }).from(source);
-      const blob=await worker.outputPdf('blob');
+
+      const sourceWidth=Math.max(794,Math.ceil(source.scrollWidth || source.getBoundingClientRect().width || 794));
+      const sourceHeight=Math.max(1,Math.ceil(source.scrollHeight || source.getBoundingClientRect().height || 1));
+      const baseScale=isAndroidLike() ? 1.5 : (isIOSLike() ? 1.6 : 1.8);
+      const maxPixels=isAndroidLike() ? 14000000 : (isIOSLike() ? 15000000 : 26000000);
+      const maxCanvasHeight=isAndroidLike() ? 15500 : (isIOSLike() ? 15000 : 28000);
+      const pixelScale=Math.sqrt(maxPixels/Math.max(1,sourceWidth*sourceHeight));
+      const heightScale=maxCanvasHeight/Math.max(1,sourceHeight);
+      const scale=Math.max(0.82,Math.min(baseScale,pixelScale,heightScale));
+
+      const canvas=await window.html2canvas(source,{
+        scale,
+        useCORS:true,
+        allowTaint:false,
+        backgroundColor:'#ffffff',
+        logging:false,
+        imageTimeout:8000,
+        scrollX:0,
+        scrollY:0,
+        x:0,
+        y:0,
+        windowWidth:794,
+        windowHeight:Math.max(1200,sourceHeight),
+        letterRendering:true,
+        onclone:(clonedDoc)=>{
+          try{
+            const cloned=clonedDoc.querySelector('.checklist-pdf-snapshot');
+            if(cloned){
+              cloned.style.setProperty('width','794px','important');
+              cloned.style.setProperty('max-width','794px','important');
+              cloned.style.setProperty('min-width','794px','important');
+              cloned.style.setProperty('position','relative','important');
+              cloned.style.setProperty('left','0','important');
+              cloned.style.setProperty('top','0','important');
+              cloned.style.setProperty('margin','0','important');
+              cloned.style.setProperty('transform','none','important');
+              cloned.style.setProperty('transform-origin','0 0','important');
+              cloned.style.setProperty('overflow','visible','important');
+            }
+          }catch(e){}
+        }
+      });
+      if(!canvas || !canvas.width || !canvas.height) throw new Error('PDF 화면 캡처에 실패했습니다.');
+      await overlayRenderedImages(source,canvas);
+
+      const pdf=new JsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+      const filename=pdfFilename(record,template);
+      const title=String(filename).replace(/\.pdf$/i,'');
+      try{ if(typeof pdf.setProperties==='function') pdf.setProperties({title,subject:title,author:title,creator:'작업안전 체크리스트'}); }catch(e){}
+      const breakpoints=collectPdfSafeBreakpoints(source,canvas);
+      const pageCount=addCanvasToPdfPages(pdf,canvas,breakpoints);
+      if(pageCount<1) throw new Error('PDF 페이지를 만들지 못했습니다.');
+      let blob;
+      try{ blob=pdf.output('blob'); }
+      catch(e){ blob=new Blob([pdf.output('arraybuffer')],{type:'application/pdf'}); }
       if(!(blob instanceof Blob) || blob.size<3500) throw new Error('생성된 PDF가 비어 있습니다. 다시 시도해 주세요.');
       return blob;
     }finally{
@@ -1294,41 +1511,204 @@
       try{ host.remove(); }catch(e){}
     }
   }
-  function triggerBlobDownload(blob,filename,targetWindow){
-    const url=URL.createObjectURL(blob);
+  function encodePdfFilenameRFC5987(filename){
+    try{return encodeURIComponent(String(filename || '작업안전체크리스트.pdf').normalize('NFC'));}
+    catch(e){return 'safety-checklist.pdf';}
+  }
+  function asciiPdfFilenameFallback(filename){
+    try{return String(filename || 'safety-checklist.pdf').replace(/[^\x20-\x7E]/g,'_') || 'safety-checklist.pdf';}
+    catch(e){return 'safety-checklist.pdf';}
+  }
+  async function createNamedPdfDownloadUrl(blob,filename){
+    try{
+      if(!blob || !filename || !('caches' in window)) return '';
+      if(!(navigator.serviceWorker && navigator.serviceWorker.controller)) return '';
+      const safeFilename=String(filename).normalize('NFC');
+      const encodedName=encodeURIComponent(safeFilename).replace(/%2F/ig,'_');
+      const url=new URL('./__safety_checklist_pdf__/'+encodedName,window.location.href).href;
+      const headers=new Headers();
+      headers.set('Content-Type','application/pdf');
+      headers.set('Content-Disposition','attachment; filename="'+asciiPdfFilenameFallback(safeFilename)+'"; filename*=UTF-8\'\''+encodePdfFilenameRFC5987(safeFilename));
+      headers.set('Cache-Control','no-store');
+      const pdfBlob=blob.type==='application/pdf' ? blob : new Blob([blob],{type:'application/pdf'});
+      const cache=await caches.open('safety-checklist-pdf-downloads-v1');
+      await cache.put(url,new Response(pdfBlob,{status:200,headers}));
+      return url;
+    }catch(e){ return ''; }
+  }
+  function cleanupNamedPdfDownloadUrl(url){
+    try{
+      if(!url || !String(url).includes('/__safety_checklist_pdf__/') || !('caches' in window)) return;
+      caches.open('safety-checklist-pdf-downloads-v1').then(cache=>cache.delete(url)).catch(()=>{});
+    }catch(e){}
+  }
+  async function makePdfUrl(blob,filename){
+    let url='';
+    let objectUrl=false;
+    try{ url=await createNamedPdfDownloadUrl(blob,filename); }catch(e){ url=''; }
+    if(!url){
+      let value=blob;
+      try{ if(typeof File==='function') value=new File([blob],filename,{type:'application/pdf'}); }catch(e){}
+      url=URL.createObjectURL(value);
+      objectUrl=true;
+    }
+    return {
+      url,
+      cleanup:()=>{
+        if(objectUrl){ try{ URL.revokeObjectURL(url); }catch(e){} }
+        else cleanupNamedPdfDownloadUrl(url);
+      }
+    };
+  }
+  function tryDownloadPdfUrl(url,filename){
+    try{
+      const a=document.createElement('a');
+      a.href=url;
+      a.download=filename;
+      a.rel='noopener';
+      a.style.display='none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{try{a.remove();}catch(e){}},300);
+      return true;
+    }catch(e){ return false; }
+  }
+  async function trySharePdfFile(blob,filename){
+    try{
+      if(!(navigator.share && navigator.canShare && typeof File==='function')) return false;
+      const file=new File([blob],filename,{type:'application/pdf'});
+      if(!navigator.canShare({files:[file]})) return false;
+      await navigator.share({title:filename.replace(/\.pdf$/i,''),files:[file]});
+      return true;
+    }catch(e){
+      if(e && e.name==='AbortError') return null;
+      return false;
+    }
+  }
+  async function savePdfBlobToDevice(blob,filename,url){
+    if(isIOSLike()){
+      const shared=await trySharePdfFile(blob,filename);
+      if(shared===true || shared===null) return shared;
+    }
+    if(tryDownloadPdfUrl(url,filename)) return true;
+    try{
+      const win=window.open(url,'_blank');
+      return !!win;
+    }catch(e){ return false; }
+  }
+  function showPdfReadyDialog(blob,filename,urlInfo){
+    try{ document.querySelector('.checklist-pdf-ready-backdrop')?.remove(); }catch(e){}
+    const overlay=document.createElement('div');
+    overlay.className='checklist-pdf-ready-backdrop';
+    const guide=isIOSLike()
+      ? "'기기에 저장'을 누른 뒤 공유창에서 '파일에 저장'을 선택하세요. 페이지 축소 조작은 필요 없습니다."
+      : (isAndroidLike()
+        ? "'기기에 저장'을 누르면 A4 폭에 맞춘 PDF가 다운로드 폴더에 저장됩니다."
+        : "'기기에 저장'을 누르면 PDF가 다운로드됩니다.");
+    overlay.innerHTML=`
+      <div class="checklist-pdf-ready-card" role="dialog" aria-modal="true" aria-label="PDF 준비 완료">
+        <div class="pdf-ready-icon">📄</div>
+        <h2>PDF 준비 완료</h2>
+        <p class="pdf-ready-name"></p>
+        <p class="pdf-ready-guide"></p>
+        <button type="button" class="pdf-ready-save">기기에 저장</button>
+        <button type="button" class="pdf-ready-share">카카오톡 등 공유</button>
+        <button type="button" class="pdf-ready-preview">PDF 미리보기</button>
+        <button type="button" class="pdf-ready-close">닫기</button>
+      </div>`;
+    overlay.querySelector('.pdf-ready-name').textContent=filename;
+    overlay.querySelector('.pdf-ready-guide').textContent=guide;
+    const saveBtn=overlay.querySelector('.pdf-ready-save');
+    const shareBtn=overlay.querySelector('.pdf-ready-share');
+    const previewBtn=overlay.querySelector('.pdf-ready-preview');
+    const closeBtn=overlay.querySelector('.pdf-ready-close');
+    try{
+      const file=new File([blob],filename,{type:'application/pdf'});
+      shareBtn.hidden=!(navigator.share && navigator.canShare && navigator.canShare({files:[file]}));
+    }catch(e){ shareBtn.hidden=true; }
+    let closed=false;
+    const cleanup=()=>{ try{ urlInfo && urlInfo.cleanup && urlInfo.cleanup(); }catch(e){} };
+    const close=()=>{
+      if(closed) return;
+      closed=true;
+      try{ overlay.remove(); }catch(e){}
+      cleanup();
+    };
+    saveBtn.onclick=async()=>{
+      saveBtn.disabled=true;
+      const old=saveBtn.textContent;
+      saveBtn.textContent=isIOSLike() ? '저장 위치 여는 중…' : '저장 중…';
+      let done=false;
+      try{ done=await savePdfBlobToDevice(blob,filename,urlInfo.url); }catch(e){ done=false; }
+      saveBtn.disabled=false;
+      saveBtn.textContent=old;
+      if(done===false) alert('기기 저장을 시작하지 못했습니다. 공유 버튼이나 미리보기를 이용해 주세요.');
+    };
+    shareBtn.onclick=async()=>{
+      shareBtn.disabled=true;
+      const old=shareBtn.textContent;
+      shareBtn.textContent='공유 준비 중…';
+      const shared=await trySharePdfFile(blob,filename);
+      shareBtn.disabled=false;
+      shareBtn.textContent=old;
+      if(shared===false) alert('공유를 시작하지 못했습니다. 기기에 저장을 이용해 주세요.');
+    };
+    previewBtn.onclick=()=>{
+      let previewUrl='';
+      try{
+        const file=(typeof File==='function') ? new File([blob],filename,{type:'application/pdf'}) : blob;
+        previewUrl=URL.createObjectURL(file);
+        const win=window.open(previewUrl,'_blank');
+        if(!win) location.href=previewUrl;
+        setTimeout(()=>{ try{ URL.revokeObjectURL(previewUrl); }catch(e){} },5*60*1000);
+      }catch(e){
+        try{ if(previewUrl) URL.revokeObjectURL(previewUrl); }catch(_e){}
+        alert('PDF 미리보기를 열지 못했습니다.');
+      }
+    };
+    closeBtn.onclick=close;
+    overlay.addEventListener('click',e=>{ if(e.target===overlay) close(); });
+    document.body.appendChild(overlay);
+    try{ saveBtn.focus(); }catch(e){}
+    setTimeout(()=>{ if(!closed) close(); },10*60*1000);
+  }
+  async function openPdfPreview(blob,filename,targetWindow){
+    let value=blob;
+    try{ if(typeof File==='function') value=new File([blob],filename,{type:'application/pdf'}); }catch(e){}
+    const url=URL.createObjectURL(value);
     let opened=false;
     try{
       if(targetWindow && !targetWindow.closed){
         targetWindow.location.replace(url);
         opened=true;
       }else{
-        const a=document.createElement('a');
-        a.href=url; a.rel='noopener';
-        if(isIOSLike()) a.target='_blank';
-        else a.download=filename;
-        document.body.appendChild(a); a.click(); a.remove();
-        opened=true;
+        const win=window.open(url,'_blank');
+        opened=!!win;
       }
-    }finally{
-      setTimeout(()=>URL.revokeObjectURL(url),isIOSLike() ? 300000 : 60000);
+    }catch(e){}
+    if(!opened){
+      try{ URL.revokeObjectURL(url); }catch(e){}
+      throw new Error('PDF 미리보기 창을 열지 못했습니다. 팝업 차단을 확인해 주세요.');
     }
-    if(!opened) throw new Error('PDF 창을 열지 못했습니다.');
+    setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(e){} },5*60*1000);
+    return blob;
   }
   async function downloadRecordPdf(record,template,options){
     const opts=options || {};
-    if(isIOSLike() && opts.nativePrint!==false){
-      return openNativePrint(record,template,opts.targetWindow || null);
-    }
     const cached=record.pdfBlob instanceof Blob && record.pdfRenderVersion===PDF_RENDER_VERSION && record.pdfBlob.size>=3500;
     let blob=cached ? record.pdfBlob : null;
     if(!blob) blob=await createPdfBlob(record,template);
     if(!blob) throw new Error('PDF 생성에 실패했습니다.');
-    triggerBlobDownload(blob,pdfFilename(record,template),opts.targetWindow || null);
     if(record.status==='completed' && !cached){
       record.pdfBlob=blob;
       record.pdfRenderVersion=PDF_RENDER_VERSION;
+      record.pdfError='';
       await putDoc(record);
     }
+    const filename=pdfFilename(record,template);
+    if(opts.preview===true) return openPdfPreview(blob,filename,opts.targetWindow || null);
+    const urlInfo=await makePdfUrl(blob,filename);
+    showPdfReadyDialog(blob,filename,urlInfo);
     return blob;
   }
 
@@ -1354,13 +1734,13 @@
         <div><b>${Number(record.issueCount)>0 ? `이상 ${Number(record.issueCount)}건 포함 완료` : '모든 항목 확인 완료'}</b><small>${displayDateTime(record.completedAt)}</small></div>
       </div>
       <div class="checklist-view-actions">
-        <button type="button" class="primary" id="viewPdfDownload">${isIOSLike() ? 'PDF 저장·공유' : 'PDF 저장'}</button>
+        <button type="button" class="primary" id="viewPdfDownload">PDF 저장·공유</button>
         <a href="#/checklists/calendar">캘린더</a>
       </div>
       <div class="checklist-view-document">${printableHtml(record,template)}</div>`;
     const btn=node.querySelector('#viewPdfDownload');
     btn.addEventListener('click',async()=>{
-      const pdfTarget=preparePdfTarget();
+      const pdfTarget=null;
       setBusy(btn,true,'PDF 준비 중…');
       try{ await downloadRecordPdf(record,template,{targetWindow:pdfTarget}); }
       catch(e){ closePdfTarget(pdfTarget); alert(e.message || 'PDF를 저장하지 못했습니다.'); }
