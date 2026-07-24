@@ -15,7 +15,7 @@
   const FALLBACK_KEY = 'POWER_TBM_RESEARCH_CHECKLIST_FALLBACK_V1';
   const ACTIVE_DRAFT_KEY = 'POWER_TBM_RESEARCH_CHECKLIST_ACTIVE_DRAFT_V1';
   const PDF_VERSION = 'R&D 체크리스트 Version 1.0 / 2026.05';
-  const PDF_RENDER_VERSION = 'standalone-image-pdf-r5-hierarchy-20260724';
+  const PDF_RENDER_VERSION = 'standalone-image-pdf-r6-peer-compact-20260724';
   let dbPromise = null;
   let writerCleanup = null;
 
@@ -288,15 +288,9 @@
       workDate:localDate(new Date()),
       meta:{
         projectName:'',
-        company:'',
-        department:'',
-        location:'',
         datetime:localDateTimeInput(new Date()),
-        headcount:'',
         manager:'',
-        responsible:'',
-        participants:'',
-        memo:''
+        responsible:''
       },
       responses,
       recordChecks,
@@ -310,8 +304,7 @@
   function ensureDraftShape(record,template){
     const r=record || makeNewDraft(template);
     r.meta=Object.assign({
-      projectName:'',company:'',department:'',location:'',datetime:localDateTimeInput(new Date()),
-      headcount:'',manager:'',responsible:'',participants:'',memo:''
+      projectName:'',datetime:localDateTimeInput(new Date()),manager:'',responsible:''
     },r.meta || {});
     r.responses=r.responses || {};
     template.checkpoints.forEach(cp=>{
@@ -339,7 +332,7 @@
     record.answeredCount=answered;
     record.issueCount=issues;
     record.naCount=na;
-    record.workDate=localDate(record.meta && record.meta.datetime || Date.now());
+    record.workDate=localDate(record.meta && record.meta.datetime || record.createdAt || Date.now());
     return {answered,issues,na,total:template.checkpoints.length};
   }
   function validateRecord(record,template,forComplete){
@@ -347,8 +340,6 @@
     const m=record.meta || {};
     [
       ['공정명(과제번호)',m.projectName],
-      ['작업장소',m.location],
-      ['작업일시',m.datetime],
       ['담당자',m.manager],
       ['책임자(PL)',m.responsible]
     ].forEach(([label,value])=>{ if(!String(value || '').trim()) errors.push(`${label}을(를) 입력하세요.`); });
@@ -478,31 +469,17 @@
 
   function renderInfoFields(record,template){
     const m=record.meta;
-    const dt=splitLocalDateTime(m.datetime);
     return `
       <div class="checklist-section-card checklist-info-card">
         <div class="section-card-head">
           <div><span class="section-step">1</span><b>작업 기본정보</b></div>
         </div>
-        <div class="checklist-info-grid">
+        <div class="checklist-info-grid compact-info-grid">
           <label class="wide">작업공종(Code)<input type="text" value="${esc(template.code)}" readonly></label>
           <label class="wide">작업명<input type="text" value="${esc(template.workName)}" readonly></label>
           <label class="wide">공정명(과제번호)<input id="clProjectName" data-meta="projectName" type="text" value="${esc(m.projectName)}" placeholder="공정명 또는 과제번호"></label>
-          <div class="checklist-field date-time-field">
-            <span class="field-caption" id="clDatetimeLabel">작업일시</span>
-            <div class="datetime-parts" role="group" aria-labelledby="clDatetimeLabel">
-              <span class="datetime-part-shell date-part"><input id="clWorkDate" data-datetime-part="date" type="date" value="${esc(dt.date)}" aria-label="작업일자"></span>
-              <span class="datetime-part-shell time-part"><input id="clWorkTime" data-datetime-part="time" type="time" value="${esc(dt.time)}" aria-label="작업시간"></span>
-            </div>
-          </div>
-          <label class="location-field">작업장소<input data-meta="location" type="text" value="${esc(m.location)}" placeholder="작업장소"></label>
-          <label>회사·연구소<input data-meta="company" type="text" value="${esc(m.company)}" placeholder="회사 또는 연구소"></label>
-          <label>부서<input data-meta="department" type="text" value="${esc(m.department)}" placeholder="부서"></label>
           <label>담당자<input data-meta="manager" type="text" value="${esc(m.manager)}" placeholder="성명"></label>
           <label>책임자(PL)<input data-meta="responsible" type="text" value="${esc(m.responsible)}" placeholder="성명"></label>
-          <label>작업인원<input data-meta="headcount" type="number" min="0" inputmode="numeric" value="${esc(m.headcount)}" placeholder="0"></label>
-          <label class="wide">참여 작업자<input data-meta="participants" type="text" value="${esc(m.participants)}" placeholder="성명 입력"></label>
-          <label class="wide">비고<textarea data-meta="memo" rows="2" placeholder="특이사항">${esc(m.memo)}</textarea></label>
         </div>
       </div>`;
   }
@@ -532,14 +509,8 @@
     if(/^\s*-\s*/.test(String(cp && cp.text || ''))) return 'dash';
     return 'circle';
   }
-  function checkpointHierarchy(cp){
-    const explicit=String(cp && cp.hierarchy || '').toLowerCase();
-    if(explicit==='parent' || explicit==='child' || explicit==='detail' || explicit==='standalone') return explicit;
-    const marker=checkpointMarkerType(cp);
-    if(marker==='square') return 'parent';
-    if(marker==='dash') return cp && cp.parentId ? 'detail' : 'standalone';
-    if(marker==='circle') return cp && cp.parentId ? 'child' : 'standalone';
-    return 'standalone';
+  function checkpointLayoutClass(cp){
+    return checkpointMarkerType(cp)==='dash' ? 'detail' : 'peer';
   }
   function checkpointMarkerGlyph(cp){
     const marker=checkpointMarkerType(cp);
@@ -568,12 +539,10 @@
         ${group.items.map(({cp,index})=>{
           const r=record.responses[cp.id] || {};
           const markerType=checkpointMarkerType(cp);
-          const hierarchy=checkpointHierarchy(cp);
+          const layout=checkpointLayoutClass(cp);
           const displayText=checkpointDisplayText(cp);
-          const level=Number.isFinite(Number(cp.level)) ? Number(cp.level) : hierarchy==='parent' || hierarchy==='standalone' ? 0 : hierarchy==='detail' ? 2 : 1;
-          const parentAttr=cp.parentId ? ` data-parent-cp="${esc(cp.parentId)}"` : '';
           return `
-          <article class="checklist-cp checkpoint-${hierarchy} marker-${markerType} level-${level} ${r.status ? `status-${esc(r.status)}` : ''}" data-cp="${esc(cp.id)}" data-level="${level}"${parentAttr}>
+          <article class="checklist-cp checkpoint-${layout} marker-${markerType} ${r.status ? `status-${esc(r.status)}` : ''}" data-cp="${esc(cp.id)}">
             <div class="checklist-cp-title">
               <span class="cp-marker" aria-hidden="true">${checkpointMarkerGlyph(cp)}</span>
               <p>${esc(displayText)}</p>
@@ -947,6 +916,7 @@
       try{
         record.status='completed';
         record.completedAt=Date.now();
+        record.workDate=localDate(record.completedAt);
         record.updatedAt=Date.now();
         record.id=record.id.replace(/^draft-/,'doc-');
         record.pdfFilename=pdfFilename(record,template);
@@ -997,7 +967,7 @@
             return `<article class="checklist-document-card">
               <div><span class="template-code">${esc(r.templateCode)}</span><small>${displayDateTime(r.updatedAt)}</small></div>
               <h3>${esc(t.workName)}</h3>
-              <p>${esc(r.meta && r.meta.projectName || '공정명 미입력')} · ${esc(r.meta && r.meta.location || '장소 미입력')}</p>
+              <p>${esc(r.meta && r.meta.projectName || '공정명 미입력')} · 담당자 ${esc(r.meta && r.meta.manager || '미입력')}</p>
               <div class="doc-progress"><i style="width:${Math.round(s.answered/Math.max(1,s.total)*100)}%"></i></div>
               <div class="doc-card-actions">
                 <a href="#/checklists/write/${encodeURIComponent(r.templateCode)}/${encodeURIComponent(r.id)}">이어쓰기</a>
@@ -1046,7 +1016,7 @@
           return `<article class="checklist-document-card completed ${Number(r.issueCount)>0 ? 'has-issue' : ''}">
             <div><span class="template-code">${esc(r.templateCode)}</span><small>${displayDateTime(r.completedAt)}</small></div>
             <h3>${esc(t.workName)}</h3>
-            <p>${esc(r.meta && r.meta.projectName || '공정명 미입력')} · ${esc(r.meta && r.meta.location || '장소 미입력')}</p>
+            <p>${esc(r.meta && r.meta.projectName || '공정명 미입력')} · 담당자 ${esc(r.meta && r.meta.manager || '미입력')}</p>
             <div class="completed-badges"><span>확인 ${Number(r.answeredCount || 0)}</span><span class="${Number(r.issueCount)>0 ? 'issue' : ''}">이상 ${Number(r.issueCount || 0)}</span><span>해당없음 ${Number(r.naCount || 0)}</span></div>
             <div class="doc-card-actions">
               <a href="#/checklists/view/${encodeURIComponent(r.id)}">문서 보기</a>
@@ -1108,12 +1078,12 @@
     const checkpointRows=template.checkpoints.map((cp,i)=>{
       const r=responses[cp.id] || {};
       const markerType=checkpointMarkerType(cp);
-      const hierarchy=checkpointHierarchy(cp);
+      const layout=checkpointLayoutClass(cp);
       const displayText=checkpointDisplayText(cp);
       const section=String(cp.section || '핵심 Check Point');
       const sectionRow=section!==previousSection ? `<tr class="pdf-section-row"><td colspan="4">${esc(section)}</td></tr>` : '';
       previousSection=section;
-      return `${sectionRow}<tr class="pdf-checkpoint-row pdf-${hierarchy} marker-${markerType} ${r.status==='issue' ? 'pdf-issue' : ''}">
+      return `${sectionRow}<tr class="pdf-checkpoint-row pdf-${layout} marker-${markerType} ${r.status==='issue' ? 'pdf-issue' : ''}">
         <td class="pdf-marker-cell"><span>${checkpointMarkerGlyph(cp)}</span><small>${i+1}</small></td>
         <td class="pdf-item-cell">${esc(displayText)}</td>
         <td>${esc(statusLabel(r.status))}</td><td>${esc(r.note || '')}${r.photo ? `<div class="pdf-photo"><img src="${esc(r.photo)}" alt=""></div>` : ''}</td>
@@ -1129,12 +1099,9 @@
           <div>${esc(template.code)} · ${esc(template.majorCategory)} / ${esc(template.middleCategory)}</div>
         </header>
         <table class="pdf-info-table">
-          <tr><th>작업명</th><td colspan="3">${esc(template.workName)}</td></tr>
-          <tr><th>공정명(과제번호)</th><td>${esc(record.meta && record.meta.projectName)}</td><th>작업장소</th><td>${esc(record.meta && record.meta.location)}</td></tr>
-          <tr><th>작업일시</th><td>${esc(displayDateTime(record.meta && record.meta.datetime))}</td><th>회사·연구소</th><td>${esc(record.meta && record.meta.company)}</td></tr>
+          <tr><th>작업공종(Code)</th><td>${esc(template.code)}</td><th>작업명</th><td>${esc(template.workName)}</td></tr>
+          <tr><th>공정명(과제번호)</th><td colspan="3">${esc(record.meta && record.meta.projectName)}</td></tr>
           <tr><th>담당자</th><td>${esc(record.meta && record.meta.manager)}</td><th>책임자(PL)</th><td>${esc(record.meta && record.meta.responsible)}</td></tr>
-          <tr><th>작업인원</th><td>${esc(record.meta && record.meta.headcount)}</td><th>부서</th><td>${esc(record.meta && record.meta.department)}</td></tr>
-          <tr><th>참여 작업자</th><td colspan="3">${esc(record.meta && record.meta.participants)}</td></tr>
         </table>
         <div class="pdf-two-col">
           <section><h2>작업절차도</h2><ol>${procedures}</ol></section>
@@ -1146,9 +1113,8 @@
           <thead><tr><th>구분</th><th>점검 항목</th><th>결과</th><th>이상·조치 / 사유</th></tr></thead>
           <tbody>${checkpointRows}</tbody>
         </table>
-        <div class="pdf-bottom-grid">
+        <div class="pdf-bottom-grid single">
           <section><h2>기록·보관</h2><ul>${docs}</ul></section>
-          <section><h2>비고</h2><p>${esc(record.meta && record.meta.memo || '-')}</p></section>
         </div>
         <div class="pdf-signatures">
           <div><b>담당자 : ${esc(record.meta && record.meta.manager)}</b>${record.signatures && record.signatures.manager ? `<img src="${esc(record.signatures.manager)}" alt="담당자 서명">` : '<span>서명 없음</span>'}</div>
