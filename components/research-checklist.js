@@ -69,7 +69,7 @@
       const win=window.open('about:blank','_blank');
       if(!win) return null;
       win.document.open();
-      win.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PDF 준비 중</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;background:#f4f7fa;color:#173c56}div{text-align:center;padding:28px}b{display:block;font-size:18px;margin-bottom:8px}small{color:#66788a;line-height:1.6}</style></head><body><div><b>PDF 미리보기를 준비하고 있습니다.</b><small>완료되면 이 창에 A4 문서가 표시됩니다.</small></div></body></html>');
+      win.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PDF 준비 중</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;background:#f4f7fa;color:#173c56}div{text-align:center;padding:28px}b{display:block;font-size:18px;margin-bottom:8px}small{color:#66788a;line-height:1.6}</style></head><body><div><b>PDF 준비 중…</b></div></body></html>');
       win.document.close();
       return win;
     }catch(e){ return null; }
@@ -274,50 +274,7 @@
     }
   }
 
-  function readTbmContext(){
-    const meta=safeJson(localStorage.getItem('tbm_meta_v1') || '{}',{});
-    const draft=safeJson(localStorage.getItem('TBM_HELPER_MINUTES_DRAFT_V3') || 'null',null);
-    const people=safeJson(localStorage.getItem('TBM_HELPER_MINUTES_PEOPLE_V1') || '{}',{});
-    const fields={};
-    if(draft && Array.isArray(draft.fields)){
-      draft.fields.forEach(f=>{
-        if(f && f.id) fields[f.id]=f.type==='checkbox' ? !!f.checked : String(f.value == null ? '' : f.value);
-      });
-    }
-    const participants=[];
-    if(people && Array.isArray(people.signNames)){
-      people.signNames.forEach(v=>{ const s=String(v || '').trim(); if(s) participants.push(s); });
-    }
-    if(!participants.length && people && Array.isArray(people.dutyRows)){
-      people.dutyRows.forEach(r=>['n1','n2'].forEach(k=>{ const s=String(r && r[k] || '').trim(); if(s) participants.push(s); }));
-    }
-    const uniqueParticipants=Array.from(new Set(participants));
-    return {
-      projectName:String(fields.minWorkName || meta.workName || '').trim(),
-      company:String(fields.minCompany || meta.company || '').trim(),
-      responsible:String(fields.minBoss || fields.minManager || meta.boss || people.managerName || people.bossName || '').trim(),
-      location:String(fields.minLocation || meta.location || '').trim(),
-      datetime:String(fields.minDatetime || '').trim(),
-      headcount:String(fields.minHeadcount || '').trim(),
-      participants:uniqueParticipants.join(', '),
-      hasData:!!(meta.workName || meta.location || meta.company || meta.boss || (draft && draft.savedAt)),
-      sourceSavedAt:Number(draft && draft.savedAt || 0)
-    };
-  }
-  function mapTbmDate(v){
-    const raw=String(v || '').trim();
-    if(!raw) return localDateTimeInput(new Date());
-    const direct=new Date(raw);
-    if(!Number.isNaN(direct.getTime())) return localDateTimeInput(direct);
-    const m=raw.match(/(\d{4})[.\-/년]\s*(\d{1,2})[.\-/월]\s*(\d{1,2})[^\d]*(\d{1,2})?(?:[:시]\s*(\d{1,2}))?/);
-    if(m){
-      const d=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]),Number(m[4] || 9),Number(m[5] || 0));
-      return localDateTimeInput(d);
-    }
-    return localDateTimeInput(new Date());
-  }
   function makeNewDraft(template, draftId){
-    const tbm=readTbmContext();
     const responses={};
     template.checkpoints.forEach(cp=>{ responses[cp.id]={status:'',note:'',photo:''}; });
     const recordChecks={};
@@ -330,18 +287,16 @@
       updatedAt:Date.now(),
       workDate:localDate(new Date()),
       meta:{
-        projectName:tbm.projectName || '',
-        company:tbm.company || '',
+        projectName:'',
+        company:'',
         department:'',
-        location:tbm.location || '',
-        datetime:mapTbmDate(tbm.datetime),
-        headcount:tbm.headcount || '',
+        location:'',
+        datetime:localDateTimeInput(new Date()),
+        headcount:'',
         manager:'',
-        responsible:tbm.responsible || '',
-        participants:tbm.participants || '',
-        memo:'',
-        tbmLinked:tbm.hasData,
-        tbmLinkedAt:tbm.hasData ? Date.now() : 0
+        responsible:'',
+        participants:'',
+        memo:''
       },
       responses,
       recordChecks,
@@ -356,7 +311,7 @@
     const r=record || makeNewDraft(template);
     r.meta=Object.assign({
       projectName:'',company:'',department:'',location:'',datetime:localDateTimeInput(new Date()),
-      headcount:'',manager:'',responsible:'',participants:'',memo:'',tbmLinked:false,tbmLinkedAt:0
+      headcount:'',manager:'',responsible:'',participants:'',memo:''
     },r.meta || {});
     r.responses=r.responses || {};
     template.checkpoints.forEach(cp=>{
@@ -417,38 +372,25 @@
 
   function renderChecklistMenuPage(){
     if(writerCleanup){ try{ writerCleanup(); }catch(e){} writerCleanup=null; }
-    setPageTop('작업안전 체크리스트','R&D 표준공정 96종 · TBM 기본정보 연동');
-    const tbm=readTbmContext();
+    setPageTop('작업안전 체크리스트','');
     const node=section(`
-      <div class="checklist-hero">
+      <div class="checklist-hero compact">
         <div class="checklist-hero-icon">✓</div>
-        <div>
-          <div class="checklist-kicker">PAPERLESS SAFETY</div>
-          <h2>R&D 작업안전 체크리스트</h2>
-          <p>5대 분류 · 24개 중분류 · 표준공정 96종을 모바일에서 작성하고 서명·PDF로 보관합니다.</p>
-        </div>
-      </div>
-      <div class="checklist-link-state ${tbm.hasData ? 'linked' : ''}">
-        <span class="dot"></span>
-        <div>
-          <b>${tbm.hasData ? 'TBM 회의록 기본정보 연결 가능' : 'TBM 회의록 기본정보 없음'}</b>
-          <small>${tbm.hasData ? `${esc(tbm.projectName || '작업명 미입력')} · ${esc(tbm.location || '장소 미입력')}` : 'TBM 회의록을 먼저 작성하면 공정명·장소·책임자를 자동으로 불러옵니다.'}</small>
+        <div class="checklist-hero-main">
+          <h2>작업안전 체크리스트</h2>
+          <span class="checklist-hero-count">표준공정 ${DATA.length}종</span>
         </div>
       </div>
       <div class="checklist-menu-cards">
         <a class="checklist-menu-card primary" href="#/checklists/new">
-          <span class="menu-symbol">✎</span><span><b>새 체크리스트 작성</b><small>96종 검색 · 현장 점검 시작</small></span><i>›</i>
+          <span class="menu-symbol">✎</span><span><b>새 체크리스트 작성</b></span><i>›</i>
         </a>
         <a class="checklist-menu-card" href="#/checklists/drafts">
-          <span class="menu-symbol">▤</span><span><b>임시저장 문서</b><small>작성 중인 점검표 이어쓰기</small></span><strong id="checklistDraftCount">-</strong><i>›</i>
+          <span class="menu-symbol">▤</span><span><b>임시저장 문서</b></span><strong id="checklistDraftCount">-</strong><i>›</i>
         </a>
         <a class="checklist-menu-card" href="#/checklists/calendar">
-          <span class="menu-symbol">▦</span><span><b>완료 문서·캘린더</b><small>전자서명 PDF 확인·저장</small></span><strong id="checklistCompleteCount">-</strong><i>›</i>
+          <span class="menu-symbol">▦</span><span><b>완료 문서·캘린더</b></span><strong id="checklistCompleteCount">-</strong><i>›</i>
         </a>
-      </div>
-      <div class="checklist-source-card">
-        <div><b>적용 원본</b><span>${esc(PDF_VERSION)}</span></div>
-        <a href="docs/standard-process-checklists-96.pdf" target="_blank" rel="noopener">96종 원본 PDF 보기</a>
       </div>
     `,'panel checklist-page checklist-menu-page');
     mountNode(node);
@@ -464,7 +406,7 @@
 
   function renderChecklistPickerPage(){
     if(writerCleanup){ try{ writerCleanup(); }catch(e){} writerCleanup=null; }
-    setPageTop('체크리스트 선택','코드·작업명·분류로 96종 검색');
+    setPageTop('체크리스트 선택','');
     const majors=Array.from(new Map(DATA.map(x=>[x.majorCode,x.majorCategory])).entries());
     const node=section(`
       <div class="checklist-picker-head">
@@ -541,12 +483,11 @@
       <div class="checklist-section-card checklist-info-card">
         <div class="section-card-head">
           <div><span class="section-step">1</span><b>작업 기본정보</b></div>
-          <button type="button" class="mini-action" id="checklistImportTbm">TBM 정보 불러오기</button>
         </div>
         <div class="checklist-info-grid">
           <label class="wide">작업공종(Code)<input type="text" value="${esc(template.code)}" readonly></label>
           <label class="wide">작업명<input type="text" value="${esc(template.workName)}" readonly></label>
-          <label class="wide">공정명(과제번호)<input id="clProjectName" data-meta="projectName" type="text" value="${esc(m.projectName)}" placeholder="예: R25XX01 암모니아 혼소 발전 실증"></label>
+          <label class="wide">공정명(과제번호)<input id="clProjectName" data-meta="projectName" type="text" value="${esc(m.projectName)}" placeholder="공정명 또는 과제번호"></label>
           <div class="checklist-field date-time-field">
             <span class="field-caption" id="clDatetimeLabel">작업일시</span>
             <div class="datetime-parts" role="group" aria-labelledby="clDatetimeLabel">
@@ -554,18 +495,14 @@
               <span class="datetime-part-shell time-part"><input id="clWorkTime" data-datetime-part="time" type="time" value="${esc(dt.time)}" aria-label="작업시간"></span>
             </div>
           </div>
-          <label class="location-field">작업장소<input data-meta="location" type="text" value="${esc(m.location)}" placeholder="실험실·현장명"></label>
+          <label class="location-field">작업장소<input data-meta="location" type="text" value="${esc(m.location)}" placeholder="작업장소"></label>
           <label>회사·연구소<input data-meta="company" type="text" value="${esc(m.company)}" placeholder="회사 또는 연구소"></label>
-          <label>부서<input data-meta="department" type="text" value="${esc(m.department)}" placeholder="부서명"></label>
+          <label>부서<input data-meta="department" type="text" value="${esc(m.department)}" placeholder="부서"></label>
           <label>담당자<input data-meta="manager" type="text" value="${esc(m.manager)}" placeholder="성명"></label>
           <label>책임자(PL)<input data-meta="responsible" type="text" value="${esc(m.responsible)}" placeholder="성명"></label>
           <label>작업인원<input data-meta="headcount" type="number" min="0" inputmode="numeric" value="${esc(m.headcount)}" placeholder="0"></label>
-          <label class="wide">참여 작업자<input data-meta="participants" type="text" value="${esc(m.participants)}" placeholder="성명을 쉼표로 구분"></label>
-          <label class="wide">비고<textarea data-meta="memo" rows="2" placeholder="작업 특이사항">${esc(m.memo)}</textarea></label>
-        </div>
-        <div class="tbm-import-note ${m.tbmLinked ? 'linked' : ''}" id="checklistTbmLinkNote">
-          ${m.tbmLinked ? '✓ TBM 회의록 기본정보를 불러온 문서입니다.' : 'TBM 회의록의 공사명·회사·장소·책임자를 불러올 수 있습니다.'}
-          <a href="#/tbm/minutes">TBM 회의록 열기</a>
+          <label class="wide">참여 작업자<input data-meta="participants" type="text" value="${esc(m.participants)}" placeholder="성명 입력"></label>
+          <label class="wide">비고<textarea data-meta="memo" rows="2" placeholder="특이사항">${esc(m.memo)}</textarea></label>
         </div>
       </div>`;
   }
@@ -633,7 +570,7 @@
   function renderSignatureBlock(record){
     return `
       <div class="checklist-section-card checklist-sign-card">
-        <div class="section-card-head"><div><span class="section-step">4</span><b>전자서명</b></div><small>완료 전에 담당자·책임자 모두 서명</small></div>
+        <div class="section-card-head"><div><span class="section-step">4</span><b>전자서명</b></div></div>
         <div class="checklist-sign-grid">
           <div class="signature-box">
             <div class="signature-title"><b>담당자</b><span id="clManagerSignName">${esc(record.meta.manager || '성명 미입력')}</span></div>
@@ -656,7 +593,6 @@
         <div>
           <span class="template-code">${esc(template.code)}</span>
           <h2>${esc(template.workName)}</h2>
-          <p>${esc(template.majorCategory)} · ${esc(template.middleCategory)} · 원본 ${template.sourcePage}페이지</p>
         </div>
         <div class="checklist-progress-ring" id="checklistProgressRing" style="--p:${Math.round(summary.answered/summary.total*100)}">
           <b id="checklistProgressPercent">${Math.round(summary.answered/summary.total*100)}%</b><small>확인</small>
@@ -802,7 +738,7 @@
       draftId=uid('draft');
       history.replaceState(null,document.title,`#/checklists/write/${encodeURIComponent(code)}/${encodeURIComponent(draftId)}`);
     }
-    setPageTop('체크리스트 작성',`${template.code} · ${template.workName}`);
+    setPageTop('체크리스트 작성','');
     const loading=section('<div class="checklist-loading"><span></span>작성 문서를 불러오는 중입니다.</div>','panel checklist-page');
     mountNode(loading);
 
@@ -868,13 +804,6 @@
       const issue=node.querySelector('#clIssueCount');
       if(ans) ans.textContent=String(s.answered);
       if(issue) issue.textContent=String(s.issues);
-    }
-    function syncDateTimeInputs(value){
-      const parts=splitLocalDateTime(value);
-      const datePart=node.querySelector('[data-datetime-part="date"]');
-      const timePart=node.querySelector('[data-datetime-part="time"]');
-      if(datePart) datePart.value=parts.date;
-      if(timePart) timePart.value=parts.time;
     }
     function updateSignNames(){
       const m=node.querySelector('[data-meta="manager"]');
@@ -952,33 +881,6 @@
       });
     });
 
-    const importBtn=node.querySelector('#checklistImportTbm');
-    if(importBtn) importBtn.addEventListener('click',()=>{
-      const tbm=readTbmContext();
-      if(!tbm.hasData){
-        alert('저장된 TBM 회의록 기본정보가 없습니다. TBM 회의록에서 기본정보를 먼저 입력해 주세요.');
-        return;
-      }
-      const map={
-        projectName:tbm.projectName,company:tbm.company,location:tbm.location,
-        responsible:tbm.responsible,headcount:tbm.headcount,participants:tbm.participants,
-        datetime:mapTbmDate(tbm.datetime)
-      };
-      Object.keys(map).forEach(k=>{
-        if(map[k]) record.meta[k]=map[k];
-        if(k==='datetime') return;
-        const el=node.querySelector(`[data-meta="${k}"]`);
-        if(el && map[k]) el.value=map[k];
-      });
-      if(map.datetime) syncDateTimeInputs(map.datetime);
-      record.meta.tbmLinked=true; record.meta.tbmLinkedAt=Date.now();
-      const note=node.querySelector('#checklistTbmLinkNote');
-      if(note){
-        note.classList.add('linked');
-        note.innerHTML='✓ TBM 회의록 기본정보를 다시 불러왔습니다. <a href="#/tbm/minutes">TBM 회의록 열기</a>';
-      }
-      updateSignNames(); scheduleSave(); flash('TBM 기본정보를 반영했습니다.','ok');
-    });
 
     const validation=node.querySelector('#checklistValidationBox');
     function showErrors(errors){
@@ -1051,7 +953,7 @@
 
   function renderChecklistDraftsPage(){
     if(writerCleanup){ try{ writerCleanup(); }catch(e){} writerCleanup=null; }
-    setPageTop('임시저장 문서','작성 중인 체크리스트 이어쓰기');
+    setPageTop('임시저장 문서','');
     const node=section('<div class="checklist-loading"><span></span>임시저장 문서를 확인하는 중입니다.</div>','panel checklist-page');
     mountNode(node);
     getAllDocs().then(rows=>{
@@ -1099,7 +1001,7 @@
   }
   function renderChecklistCalendarPage(){
     if(writerCleanup){ try{ writerCleanup(); }catch(e){} writerCleanup=null; }
-    setPageTop('완료 문서·캘린더','날짜별 전자서명 문서와 PDF 보관');
+    setPageTop('완료 문서·캘린더','');
     const node=section('<div class="checklist-loading"><span></span>완료 문서를 불러오는 중입니다.</div>','panel checklist-page checklist-calendar-page');
     mountNode(node);
     getAllDocs().then(rows=>{
@@ -1137,7 +1039,7 @@
           </div>
           <div class="checklist-list-head"><b>${selected} · ${records.filter(r=>r.workDate===selected).length}건</b><a href="#/checklists/new">새로 작성</a></div>
           <div class="checklist-document-list">${dayList()}</div>
-          <div class="checklist-storage-note">이 기기의 브라우저 저장소에 완료 문서 ${records.length}건을 보관 중입니다. 중요한 문서는 PDF로 별도 저장해 주세요.</div>`;
+          `;
         node.querySelector('#clPrevMonth').onclick=()=>{ month--; if(month<0){month=11;year--;} selected=`${year}-${pad(month+1)}-01`; draw(); };
         node.querySelector('#clNextMonth').onclick=()=>{ month++; if(month>11){month=0;year++;} selected=`${year}-${pad(month+1)}-01`; draw(); };
         node.querySelectorAll('[data-date]').forEach(btn=>btn.onclick=()=>{ selected=btn.getAttribute('data-date'); draw(); });
@@ -1336,7 +1238,7 @@
     let canvasDrawW=drawW;
     let plannedCuts=[];
 
-    // Power TBM과 같은 방식: 마지막 장에 몇 줄만 남는 경우 최대 6% 안에서
+    // 마지막 장에 몇 줄만 남는 경우 최대 6% 안에서
     // 문서 전체 폭을 살짝 줄여 앞 장의 남는 공간을 사용합니다.
     const basePageTotal=Math.ceil(canvas.height/basePagePxH);
     if(basePageTotal>1){
@@ -1427,7 +1329,7 @@
     host.style.visibility='visible';
     host.innerHTML=printableHtml(record,template);
     cover.className='checklist-pdf-generation-cover';
-    cover.innerHTML='<span></span><b>Power TBM 방식으로 PDF를 만드는 중입니다.</b><small>A4 폭 맞춤과 페이지 분할을 적용하고 있습니다.</small>';
+    cover.innerHTML='<span></span><b>PDF 생성 중</b>';
     document.body.classList.add('checklist-pdf-generating');
     document.body.appendChild(host);
     document.body.appendChild(cover);
@@ -1715,7 +1617,7 @@
   async function renderChecklistViewPage(rawId){
     if(writerCleanup){ try{ writerCleanup(); }catch(e){} writerCleanup=null; }
     const id=normalizeCode(rawId || parseViewHash());
-    setPageTop('완료 체크리스트','전자서명 문서 확인·PDF 저장');
+    setPageTop('완료 체크리스트','');
     const node=section('<div class="checklist-loading"><span></span>완료 문서를 불러오는 중입니다.</div>','panel checklist-page checklist-view-page');
     mountNode(node);
     const record=await getDoc(id);
