@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#16324a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="작업안전 체크">
+  <title>작업안전 체크리스트</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="styles-checklist.css">
+</head>
+<body>
+  <header id="topbar" class="topbar">
+    <button id="backBtn" class="top-btn" aria-label="뒤로가기">‹</button>
+    <div class="top-title"><b id="pageTitle">작업안전 체크리스트</b><small id="pageSub">Paperless Safety</small></div>
+    <button id="homeBtn" class="top-btn" aria-label="홈">⌂</button>
+  </header>
+  <main id="app" class="app"></main>
+  <nav class="bottom-nav">
+    <a href="#/checklists" data-route="home"><span>⌂</span><b>홈</b></a>
+    <a href="#/checklists/picker" data-route="picker"><span>＋</span><b>작성</b></a>
+    <a href="#/checklists/drafts" data-route="drafts"><span>▤</span><b>임시저장</b></a>
+    <a href="#/checklists/calendar" data-route="calendar"><span>▦</span><b>보관</b></a>
+  </nav>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="data/research-checklists-v1.js"></script>
+  <script src="components/research-checklist.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

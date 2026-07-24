@@ -1,0 +1,14 @@
+{
+  "name":"작업안전 체크리스트",
+  "short_name":"안전체크",
+  "description":"96종 표준공정 기반 페이퍼리스 작업안전 체크리스트",
+  "start_url":"./#/checklists",
+  "display":"standalone",
+  "background_color":"#f4f7fa",
+  "theme_color":"#16324a",
+  "lang":"ko-KR",
+  "icons":[
+    {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png"},
+    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png"}
+  ]
+}
