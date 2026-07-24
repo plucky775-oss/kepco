@@ -18,6 +18,69 @@
   const PDF_RENDER_VERSION = 'standalone-image-pdf-r8-branding-20260724';
   let dbPromise = null;
   let writerCleanup = null;
+  let checklistHeroClockTimer = null;
+  let checklistHeroClockMinuteKey = '';
+
+  // Power TBM 홈 시계와 같은 방식의 7세그먼트 숫자 매핑
+  const CHECKLIST_SEGMENT_DIGIT_MAP = {
+    '0':['a','b','c','d','e','f'],
+    '1':['b','c'],
+    '2':['a','b','d','e','g'],
+    '3':['a','b','c','d','g'],
+    '4':['b','c','f','g'],
+    '5':['a','c','d','f','g'],
+    '6':['a','c','d','e','f','g'],
+    '7':['a','b','c'],
+    '8':['a','b','c','d','e','f','g'],
+    '9':['a','b','c','d','f','g']
+  };
+  const CHECKLIST_WEEKDAYS = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+
+  function renderChecklistSevenSegmentTime(value){
+    return `<span class="checklist-seg-clock" aria-hidden="true">${String(value || '').split('').map(ch=>{
+      if(ch === ':') return '<span class="checklist-seg-colon"></span>';
+      const active = CHECKLIST_SEGMENT_DIGIT_MAP[ch] || [];
+      return `<span class="checklist-seg-digit" data-digit="${ch}">${['a','b','c','d','e','f','g'].map(seg=>`<i class="checklist-seg ${seg}${active.includes(seg) ? ' on' : ''}"></i>`).join('')}</span>`;
+    }).join('')}</span>`;
+  }
+
+  function stopChecklistHeroClock(){
+    if(checklistHeroClockTimer){
+      clearInterval(checklistHeroClockTimer);
+      checklistHeroClockTimer = null;
+    }
+  }
+
+  function updateChecklistHeroClock(){
+    const timeEl = document.getElementById('checklistHeroTime');
+    const dateEl = document.getElementById('checklistHeroDate');
+    if(!timeEl || !dateEl){
+      stopChecklistHeroClock();
+      return;
+    }
+
+    const now = new Date();
+    const timeLabel = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const dateLabel = `${now.getMonth()+1}월 ${now.getDate()}일 ${CHECKLIST_WEEKDAYS[now.getDay()]}`;
+    const minuteKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${timeLabel}`;
+
+    if(checklistHeroClockMinuteKey !== minuteKey || !timeEl.querySelector('.checklist-seg-clock')){
+      checklistHeroClockMinuteKey = minuteKey;
+      timeEl.innerHTML = renderChecklistSevenSegmentTime(timeLabel);
+      timeEl.setAttribute('aria-label', `현재 시간 ${pad(now.getHours())}시 ${pad(now.getMinutes())}분`);
+    }
+    if(dateEl.textContent !== dateLabel){
+      dateEl.textContent = dateLabel;
+      dateEl.setAttribute('aria-label', `오늘은 ${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${CHECKLIST_WEEKDAYS[now.getDay()]}`);
+    }
+  }
+
+  function startChecklistHeroClock(){
+    stopChecklistHeroClock();
+    checklistHeroClockMinuteKey = '';
+    updateChecklistHeroClock();
+    checklistHeroClockTimer = setInterval(updateChecklistHeroClock, 1000);
+  }
 
   function esc(v){
     return String(v == null ? '' : v)
@@ -132,6 +195,8 @@
     box._timer=setTimeout(()=>box.classList.remove('show'),2600);
   }
   function mountNode(node){
+    const hasHeroClock = Boolean(node && typeof node.querySelector === 'function' && node.querySelector('#checklistHeroTime'));
+    if(!hasHeroClock) stopChecklistHeroClock();
     if(typeof window.mount === 'function') window.mount(node);
     else{
       const app=document.getElementById('app');
@@ -370,9 +435,9 @@
           <span class="checklist-hero-chip">한국전력 전력연구원</span>
           <h2>작업안전 체크리스트</h2>
         </div>
-        <div class="checklist-hero-visual" aria-hidden="true">
-          <img src="assets/menu/clipboard.png" alt="">
-          <span class="checklist-hero-check">✓</span>
+        <div class="checklist-hero-clock" aria-label="현재 날짜와 시간">
+          <div class="checklist-hero-date" id="checklistHeroDate">-</div>
+          <div class="checklist-hero-time" id="checklistHeroTime" role="timer">--:--</div>
         </div>
       </div>
       <div class="checklist-menu-cards">
@@ -396,6 +461,7 @@
       </div>
     `,'panel checklist-page checklist-menu-page');
     mountNode(node);
+    startChecklistHeroClock();
     getAllDocs().then(rows=>{
       const drafts=rows.filter(x=>x.status==='draft').length;
       const completed=rows.filter(x=>x.status==='completed').length;
@@ -1666,10 +1732,16 @@
   }
 
   window.addEventListener('hashchange',()=>{
+    if(String(location.hash || '') !== '#/checklists') stopChecklistHeroClock();
     if(!String(location.hash || '').startsWith('#/checklists/write') && writerCleanup){
       try{ writerCleanup(); }catch(e){}
       writerCleanup=null;
     }
+  });
+
+  window.addEventListener('pagehide',stopChecklistHeroClock);
+  window.addEventListener('pageshow',()=>{
+    if(document.getElementById('checklistHeroTime')) startChecklistHeroClock();
   });
 
   window.renderChecklistMenuPage=renderChecklistMenuPage;
