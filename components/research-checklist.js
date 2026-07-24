@@ -413,7 +413,8 @@
     const node=section(`
       <div class="checklist-picker-head">
         <div class="checklist-search-wrap">
-          <span>⌕</span><input id="checklistSearch" type="search" placeholder="예: 고전압, 수소, 연구-2-2-02" autocomplete="off">
+          <span class="checklist-search-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg></span>
+          <input id="checklistSearch" type="search" placeholder="체크리스트 제목 검색" aria-label="체크리스트 제목 검색" autocomplete="off">
         </div>
         <div class="checklist-filter-row">
           <select id="checklistMajorFilter" aria-label="대분류">
@@ -445,9 +446,8 @@
         if(major.value && item.majorCode!==major.value) return false;
         if(sub.value && item.subCode!==sub.value) return false;
         if(!q) return true;
-        const hay=[item.code,item.workName,item.majorCategory,item.middleCategory]
-          .concat(item.hazards || []).join(' ').toLowerCase();
-        return hay.includes(q);
+        const title=String(item.workName || '').toLowerCase().replace(/\s+/g,' ');
+        return title.includes(q);
       });
       count.textContent=String(rows.length);
       list.innerHTML=rows.length ? rows.map(item=>`
@@ -457,11 +457,12 @@
             <span class="template-category">${esc(item.majorCategory)} · ${esc(item.middleCategory)}</span>
           </div>
           <h3>${esc(item.workName)}</h3>
-          <div class="template-stats">
-            <span>절차 ${item.procedures.length}</span><span>위험요인 ${item.hazards.length}</span><span>점검 ${item.checkpoints.length}</span>
+          <div class="template-card-bottom">
+            <div class="template-stats" aria-label="체크리스트 구성 정보">
+              <span>절차 <b>${item.procedures.length}</b></span><span>위험요인 <b>${item.hazards.length}</b></span><span>점검 <b>${item.checkpoints.length}</b></span>
+            </div>
+            <button type="button" class="checklist-start-btn" data-code="${esc(item.code)}">이 체크리스트 작성</button>
           </div>
-          <div class="template-hazard-preview">${esc((item.hazards || []).slice(0,2).join(' · '))}</div>
-          <button type="button" class="checklist-start-btn" data-code="${esc(item.code)}">이 체크리스트 작성</button>
         </article>`).join('') : '<div class="checklist-empty">검색 결과가 없습니다.</div>';
       list.querySelectorAll('[data-code]').forEach(btn=>{
         btn.addEventListener('click',()=>{
