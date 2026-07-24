@@ -369,24 +369,29 @@
         <div class="checklist-hero-mark">
           <span class="checklist-hero-chip">한국전력 전력연구원</span>
           <h2>작업안전 체크리스트</h2>
-          <p class="checklist-hero-sub">표준공정 96종 기반 페이퍼리스 안전점검</p>
-          <div class="checklist-hero-pills">
-            <span>표준공정 ${DATA.length}종</span>
-            <span>전자서명</span>
-            <span>PDF 보관</span>
-          </div>
         </div>
-        <div class="checklist-hero-icon">✓</div>
+        <div class="checklist-hero-visual" aria-hidden="true">
+          <img src="assets/menu/clipboard.png" alt="">
+          <span class="checklist-hero-check">✓</span>
+        </div>
       </div>
       <div class="checklist-menu-cards">
         <a class="checklist-menu-card primary" href="#/checklists/new">
-          <span class="menu-symbol">📝</span><span><b>새 체크리스트 작성</b><em>작업안전 체크리스트를 바로 작성합니다.</em></span><i>›</i>
+          <span class="menu-symbol menu-symbol-write"><img src="assets/menu/tbm.png" alt=""></span>
+          <span class="menu-label"><b>새 체크리스트 작성</b></span>
+          <i class="menu-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></i>
         </a>
         <a class="checklist-menu-card" href="#/checklists/drafts">
-          <span class="menu-symbol">📂</span><span><b>임시저장 문서</b><em>작성 중인 문서를 이어서 확인합니다.</em></span><strong id="checklistDraftCount">-</strong><i>›</i>
+          <span class="menu-symbol menu-symbol-draft"><img src="assets/menu/risk.png" alt=""></span>
+          <span class="menu-label"><b>임시저장 문서</b></span>
+          <strong id="checklistDraftCount">0건</strong>
+          <i class="menu-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></i>
         </a>
         <a class="checklist-menu-card" href="#/checklists/calendar">
-          <span class="menu-symbol">🗂</span><span><b>완료 문서·캘린더</b><em>완료 문서 조회와 PDF 저장·공유</em></span><strong id="checklistCompleteCount">-</strong><i>›</i>
+          <span class="menu-symbol menu-symbol-calendar"><img src="assets/menu/calendar-3d.png" alt=""></span>
+          <span class="menu-label"><b>완료 문서·캘린더</b></span>
+          <strong id="checklistCompleteCount">0건</strong>
+          <i class="menu-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></i>
         </a>
       </div>
     `,'panel checklist-page checklist-menu-page');
