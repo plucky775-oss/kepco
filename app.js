@@ -1,11 +1,16 @@
 (function(){
   'use strict';
-  window.APP_VERSION='1.3.1';
+  window.APP_VERSION='1.4.0';
   const app=document.getElementById('app');
   const title=document.getElementById('pageTitle');
   const sub=document.getElementById('pageSub');
   window.mount=function(node){ app.innerHTML=''; app.appendChild(node); window.scrollTo(0,0); };
-  window.setTop=function(t,s){ title.textContent=t||'작업안전 체크리스트'; sub.textContent=s||'Paperless Safety'; };
+  window.setTop=function(t,s){
+    title.textContent=t||'작업안전 체크리스트';
+    const text=String(s||'').trim();
+    sub.textContent=text;
+    sub.hidden=!text;
+  };
   document.getElementById('homeBtn').onclick=()=>location.hash='#/checklists';
   document.getElementById('backBtn').onclick=()=>{ if(history.length>1) history.back(); else location.hash='#/checklists'; };
   function activeNav(key){ document.querySelectorAll('.bottom-nav a').forEach(a=>a.classList.toggle('active',a.dataset.route===key)); }
@@ -29,7 +34,7 @@
       refreshing=true;
       location.reload();
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260724r4',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260724r5',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{}));
   }
   route();
 })();

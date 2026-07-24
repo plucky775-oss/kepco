@@ -1,4 +1,4 @@
-/* Power TBM - R&D 작업안전 체크리스트 */
+/* 독립형 작업안전 체크리스트 */
 .checklist-page{
   --cl-navy:#16324a;
   --cl-blue:#2563eb;
@@ -26,18 +26,11 @@
   display:grid;place-items:center;font-size:34px;font-weight:1000;
   background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.25);
 }
-.checklist-kicker{font-size:11px;font-weight:900;letter-spacing:1.6px;opacity:.76}
 .checklist-hero h2{font-size:24px;line-height:1.2;margin:4px 0 7px;letter-spacing:-.7px}
-.checklist-hero p{margin:0;font-size:14px;line-height:1.55;color:rgba(255,255,255,.86)}
-.checklist-link-state{
-  display:flex;gap:10px;align-items:center;margin-top:12px;padding:13px 15px;
-  border:1px solid var(--cl-line);background:#fff;border-radius:16px;color:var(--cl-navy);
-}
-.checklist-link-state .dot{width:10px;height:10px;border-radius:50%;background:#94a3b8;box-shadow:0 0 0 5px #eef2f6}
-.checklist-link-state.linked .dot{background:#16a34a;box-shadow:0 0 0 5px #e5f8ea}
-.checklist-link-state div{min-width:0;display:flex;flex-direction:column;gap:3px}
-.checklist-link-state b{font-size:14px}
-.checklist-link-state small{font-size:12px;color:var(--cl-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.checklist-hero.compact{padding:18px 20px;min-height:92px}
+.checklist-hero-main{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+.checklist-hero.compact h2{margin:0;font-size:23px}
+.checklist-hero-count{display:inline-flex;align-items:center;min-height:27px;padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);font-size:11px;font-weight:900;white-space:nowrap}
 .checklist-menu-cards{display:grid;gap:10px;margin-top:14px}
 .checklist-menu-card{
   display:grid;grid-template-columns:46px minmax(0,1fr) auto auto;gap:12px;align-items:center;
@@ -52,21 +45,12 @@
 .checklist-menu-card.primary .menu-symbol{background:#2563eb;color:#fff}
 .checklist-menu-card>span:nth-child(2){display:flex;flex-direction:column;gap:3px;min-width:0}
 .checklist-menu-card b{font-size:16px}
-.checklist-menu-card small{font-size:12px;color:var(--cl-muted)}
 .checklist-menu-card strong{font-size:12px;color:#2563eb;background:#edf4ff;padding:5px 8px;border-radius:999px}
 .checklist-menu-card i{font-style:normal;font-size:28px;color:#8da0b3}
-.checklist-source-card{
-  display:flex;justify-content:space-between;align-items:center;gap:10px;
-  margin-top:14px;padding:13px 15px;border-radius:15px;background:#f8fafc;border:1px dashed #cbd5e1;
-}
-.checklist-source-card>div{display:flex;flex-direction:column;gap:2px}
-.checklist-source-card b{font-size:12px;color:var(--cl-muted)}
-.checklist-source-card span{font-size:13px;font-weight:800;color:var(--cl-navy)}
-.checklist-source-card a{font-size:12px;font-weight:900;color:#2563eb;text-decoration:none}
 
 /* picker */
 .checklist-picker-head{
-  position:sticky;top:calc(var(--tbm-topbar-height, 72px) + 4px);z-index:15;
+  position:sticky;top:calc(var(--app-topbar-height, 72px) + 4px);z-index:15;
   margin:-2px 0 12px;padding:12px;border-radius:18px;background:rgba(247,250,253,.94);
   border:1px solid var(--cl-line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
 }
@@ -104,7 +88,7 @@
   padding:17px;border-radius:20px;background:linear-gradient(145deg,#f8fbff,#edf4fb);border:1px solid #d8e6f2;
 }
 .checklist-writer-head>div:first-child{min-width:0}
-.checklist-writer-head h2{font-size:19px;line-height:1.35;margin:8px 0 4px;color:var(--cl-navy)}
+.checklist-writer-head h2{font-size:19px;line-height:1.35;margin:8px 0 0;color:var(--cl-navy)}
 .checklist-writer-head p{font-size:12px;color:var(--cl-muted);margin:0}
 .checklist-progress-ring{
   --p:0;flex:0 0 68px;width:68px;height:68px;border-radius:50%;
@@ -157,11 +141,6 @@
 .checklist-info-grid input:focus,.checklist-info-grid textarea:focus{border-color:#3b82f6!important;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
 .checklist-info-grid .datetime-part-shell input:focus{box-shadow:none!important}
 .checklist-info-grid input[readonly]{background:#f3f6f9!important;color:#506172!important}
-.tbm-import-note{
-  display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 14px 14px;padding:10px 11px;border-radius:11px;background:#f3f6f9;color:#66788a;font-size:11px;
-}
-.tbm-import-note.linked{background:#e9f8ef;color:#17663d}
-.tbm-import-note a{color:#2563eb;font-weight:900;text-decoration:none;white-space:nowrap}
 .checklist-reference-grid{display:grid;gap:9px;padding:12px}
 .checklist-reference-card{border:1px solid #dce5ee;border-radius:14px;background:#f9fbfd;overflow:hidden}
 .checklist-reference-card summary{
@@ -322,7 +301,7 @@
 .checklist-toast.show{opacity:1;transform:translate(-50%,0)}
 .checklist-toast.ok{background:#087f5b}
 
-/* PDF canvas: Power TBM과 같은 A4 정적 스냅샷 렌더링 스테이지 */
+/* PDF canvas: A4 정적 스냅샷 렌더링 스테이지 */
 .checklist-pdf-render-host{
   position:absolute;left:0;top:0;width:794px;height:0;max-width:none;margin:0;padding:0;
   background:#fff;z-index:-2147483647;pointer-events:none;overflow:visible;opacity:1;visibility:visible;
@@ -333,7 +312,6 @@
   padding:24px;background:rgba(244,247,250,.98);color:#173c56;text-align:center;font-size:13px;font-weight:900;
 }
 .checklist-pdf-generation-cover span{width:34px;height:34px;border:4px solid #d7e2ec;border-top-color:#2563eb;border-radius:50%;animation:clspin .8s linear infinite}
-.checklist-pdf-generation-cover small{font-size:11px;font-weight:700;color:#66788a}
 body.checklist-pdf-generating{overflow:hidden!important}
 .checklist-pdf-sheet,.checklist-pdf-sheet *{box-sizing:border-box}
 .checklist-pdf-sheet{
@@ -376,9 +354,7 @@ body.checklist-pdf-generating{overflow:hidden!important}
 
 @media (max-width:560px){
   .checklist-hero{padding:18px}.checklist-hero-icon{width:52px;height:52px;flex-basis:52px;border-radius:16px}
-  .checklist-hero h2{font-size:20px}.checklist-hero p{font-size:12px}
-  .checklist-link-state small{white-space:normal}
-  .checklist-source-card{align-items:flex-start;flex-direction:column}
+  .checklist-hero h2{font-size:20px}
   .checklist-info-grid{grid-template-columns:1fr}
   .checklist-info-grid label,.checklist-info-grid .checklist-field,.checklist-info-grid label.wide,.checklist-info-grid .date-time-field,.checklist-info-grid .location-field{grid-column:1/-1}
   .checklist-sign-grid{grid-template-columns:1fr}
@@ -387,7 +363,6 @@ body.checklist-pdf-generating{overflow:hidden!important}
   .checklist-writer-actions .primary{grid-column:1/-1}
   .checklist-status-buttons button{font-size:10px;padding:0 2px}
   .section-card-head{align-items:flex-start}
-  .tbm-import-note{align-items:flex-start;flex-direction:column}
 }
 @media (max-width:380px){
   .datetime-parts{grid-template-columns:minmax(0,1fr) 92px;gap:7px}
@@ -406,7 +381,7 @@ body.checklist-pdf-generating{overflow:hidden!important}
 }
 
 
-/* v1.3.1 Power TBM-style PDF ready dialog */
+/* PDF ready dialog */
 .checklist-pdf-ready-backdrop{
   position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;
   padding:20px max(18px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));
