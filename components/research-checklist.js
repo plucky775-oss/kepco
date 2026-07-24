@@ -15,7 +15,7 @@
   const FALLBACK_KEY = 'POWER_TBM_RESEARCH_CHECKLIST_FALLBACK_V1';
   const ACTIVE_DRAFT_KEY = 'POWER_TBM_RESEARCH_CHECKLIST_ACTIVE_DRAFT_V1';
   const PDF_VERSION = 'R&D 체크리스트 Version 1.0 / 2026.05';
-  const PDF_RENDER_VERSION = 'standalone-image-pdf-r4-20260724';
+  const PDF_RENDER_VERSION = 'standalone-image-pdf-r5-hierarchy-20260724';
   let dbPromise = null;
   let writerCleanup = null;
 
@@ -525,6 +525,30 @@
       </div>`;
   }
 
+  function checkpointMarkerType(cp){
+    const marker=String(cp && cp.marker || '').toLowerCase();
+    if(marker==='square' || marker==='circle' || marker==='dash' || marker==='plain') return marker;
+    if(cp && cp.required) return 'square';
+    if(/^\s*-\s*/.test(String(cp && cp.text || ''))) return 'dash';
+    return 'circle';
+  }
+  function checkpointHierarchy(cp){
+    const explicit=String(cp && cp.hierarchy || '').toLowerCase();
+    if(explicit==='parent' || explicit==='child' || explicit==='detail' || explicit==='standalone') return explicit;
+    const marker=checkpointMarkerType(cp);
+    if(marker==='square') return 'parent';
+    if(marker==='dash') return cp && cp.parentId ? 'detail' : 'standalone';
+    if(marker==='circle') return cp && cp.parentId ? 'child' : 'standalone';
+    return 'standalone';
+  }
+  function checkpointMarkerGlyph(cp){
+    const marker=checkpointMarkerType(cp);
+    return marker==='square' ? '■' : marker==='circle' ? '○' : marker==='dash' ? '−' : '';
+  }
+  function checkpointDisplayText(cp){
+    const text=String(cp && cp.text || '');
+    return checkpointMarkerType(cp)==='dash' ? text.replace(/^\s*-\s*/, '') : text;
+  }
   function groupCheckpoints(template){
     const groups=[];
     let current=null;
@@ -543,13 +567,19 @@
         <div class="checklist-cp-group-title">${esc(group.name)}</div>
         ${group.items.map(({cp,index})=>{
           const r=record.responses[cp.id] || {};
+          const markerType=checkpointMarkerType(cp);
+          const hierarchy=checkpointHierarchy(cp);
+          const displayText=checkpointDisplayText(cp);
+          const level=Number.isFinite(Number(cp.level)) ? Number(cp.level) : hierarchy==='parent' || hierarchy==='standalone' ? 0 : hierarchy==='detail' ? 2 : 1;
+          const parentAttr=cp.parentId ? ` data-parent-cp="${esc(cp.parentId)}"` : '';
           return `
-          <article class="checklist-cp ${r.status ? `status-${esc(r.status)}` : ''}" data-cp="${esc(cp.id)}">
+          <article class="checklist-cp checkpoint-${hierarchy} marker-${markerType} level-${level} ${r.status ? `status-${esc(r.status)}` : ''}" data-cp="${esc(cp.id)}" data-level="${level}"${parentAttr}>
             <div class="checklist-cp-title">
-              <span class="cp-number">${index+1}</span>
-              <p>${cp.required ? '<b class="cp-focus">중점</b>' : ''}${esc(cp.text)}</p>
+              <span class="cp-marker" aria-hidden="true">${checkpointMarkerGlyph(cp)}</span>
+              <p>${esc(displayText)}</p>
+              <span class="cp-order" aria-label="${index+1}번">${index+1}</span>
             </div>
-            <div class="checklist-status-buttons" role="radiogroup" aria-label="${esc(cp.text)}">
+            <div class="checklist-status-buttons" role="radiogroup" aria-label="${esc(displayText)}">
               <button type="button" data-status="ok" class="${r.status==='ok' ? 'selected' : ''}">✓ 확인</button>
               <button type="button" data-status="issue" class="${r.status==='issue' ? 'selected' : ''}">! 이상</button>
               <button type="button" data-status="na" class="${r.status==='na' ? 'selected' : ''}">－ 해당 없음</button>
@@ -1074,10 +1104,18 @@
   }
   function printableHtml(record,template){
     const responses=record.responses || {};
+    let previousSection='';
     const checkpointRows=template.checkpoints.map((cp,i)=>{
       const r=responses[cp.id] || {};
-      return `<tr class="${r.status==='issue' ? 'pdf-issue' : ''}">
-        <td>${i+1}</td><td><small>${esc(cp.section || '')}</small>${esc(cp.text)}</td>
+      const markerType=checkpointMarkerType(cp);
+      const hierarchy=checkpointHierarchy(cp);
+      const displayText=checkpointDisplayText(cp);
+      const section=String(cp.section || '핵심 Check Point');
+      const sectionRow=section!==previousSection ? `<tr class="pdf-section-row"><td colspan="4">${esc(section)}</td></tr>` : '';
+      previousSection=section;
+      return `${sectionRow}<tr class="pdf-checkpoint-row pdf-${hierarchy} marker-${markerType} ${r.status==='issue' ? 'pdf-issue' : ''}">
+        <td class="pdf-marker-cell"><span>${checkpointMarkerGlyph(cp)}</span><small>${i+1}</small></td>
+        <td class="pdf-item-cell">${esc(displayText)}</td>
         <td>${esc(statusLabel(r.status))}</td><td>${esc(r.note || '')}${r.photo ? `<div class="pdf-photo"><img src="${esc(r.photo)}" alt=""></div>` : ''}</td>
       </tr>`;
     }).join('');
@@ -1105,7 +1143,7 @@
         <section class="pdf-ppe"><b>필수 안전보호구</b><span>${esc(template.ppe)}</span></section>
         <h2 class="pdf-check-title">핵심 Check Point</h2>
         <table class="pdf-check-table">
-          <thead><tr><th>No.</th><th>점검 항목</th><th>결과</th><th>이상·조치 / 사유</th></tr></thead>
+          <thead><tr><th>구분</th><th>점검 항목</th><th>결과</th><th>이상·조치 / 사유</th></tr></thead>
           <tbody>${checkpointRows}</tbody>
         </table>
         <div class="pdf-bottom-grid">
