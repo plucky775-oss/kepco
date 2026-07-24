@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  window.APP_VERSION='1.5.0';
+  window.APP_VERSION='1.6.0';
   const app=document.getElementById('app');
   const title=document.getElementById('pageTitle');
   const sub=document.getElementById('pageSub');
@@ -34,7 +34,7 @@
       refreshing=true;
       location.reload();
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260724r6',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260724r7',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{}));
   }
   route();
 })();

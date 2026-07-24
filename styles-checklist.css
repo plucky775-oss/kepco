@@ -122,6 +122,7 @@
   border:1px solid #a9c5e4;background:#edf5ff;color:#185690;border-radius:10px;height:34px;padding:0 10px;font-size:11px;font-weight:900;
 }
 .checklist-info-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px;padding:14px}
+.checklist-info-grid.compact-info-grid{padding-bottom:16px}
 .checklist-info-grid label,.checklist-info-grid .checklist-field{grid-column:span 6;display:flex;min-width:0;flex-direction:column;gap:5px;font-size:11px;font-weight:800;color:#55697b}
 .checklist-info-grid label.wide{grid-column:1/-1}
 .checklist-info-grid .date-time-field{grid-column:span 5}
@@ -164,50 +165,31 @@
 .checklist-cp-group{border:1px solid #e1e8ef;border-radius:15px;overflow:hidden;margin-bottom:10px}
 .checklist-cp-group:last-child{margin-bottom:0}
 .checklist-cp-group-title{padding:10px 12px;background:#edf3f8;color:#24465e;font-size:12px;font-weight:1000}
-.checklist-cp{position:relative;padding:13px;border-top:1px solid #e7edf3;transition:background .2s,border-color .2s,box-shadow .2s}
+.checklist-cp{position:relative;padding:13px;border-top:1px solid #e7edf3;background:#fff;transition:background .2s,border-color .2s,box-shadow .2s}
 .checklist-cp:first-of-type{border-top:0}
-.checklist-cp.checkpoint-parent{
-  background:#f1f6fa;border-top:2px solid #bfd0dc;box-shadow:inset 4px 0 0 #244f6b;
-}
-.checklist-cp.checkpoint-child{
-  padding-left:28px;background:#fbfcfd;box-shadow:inset 2px 0 0 #d8e3ea;
-}
-.checklist-cp.checkpoint-detail{
-  padding-left:42px;background:#fdfdfd;box-shadow:inset 2px 0 0 #e4e9ed;
-}
-.checklist-cp.status-ok{background:#fbfffd}
-.checklist-cp.status-issue{background:#fff7f7}
-.checklist-cp.status-na{background:#fafafa}
-.checklist-cp.checkpoint-parent.status-ok{background:#eefaf4;box-shadow:inset 4px 0 0 #15966a}
-.checklist-cp.checkpoint-parent.status-issue{background:#fff1f1;box-shadow:inset 4px 0 0 #dc2626}
-.checklist-cp.checkpoint-parent.status-na{background:#f1f3f5;box-shadow:inset 4px 0 0 #7b8794}
-.checklist-cp.checkpoint-child.status-ok{background:#fbfffd;box-shadow:inset 2px 0 0 #b9dfcf}
-.checklist-cp.checkpoint-child.status-issue{background:#fff8f8;box-shadow:inset 2px 0 0 #f1b7b7}
-.checklist-cp.checkpoint-child.status-na{background:#fafafa;box-shadow:inset 2px 0 0 #d6dce2}
-.checklist-cp.checkpoint-detail.status-ok{background:#fcfffd;box-shadow:inset 2px 0 0 #cce8da}
-.checklist-cp.checkpoint-detail.status-issue{background:#fff9f9;box-shadow:inset 2px 0 0 #f4c9c9}
-.checklist-cp.checkpoint-detail.status-na{background:#fbfbfb;box-shadow:inset 2px 0 0 #dde2e6}
+.checklist-cp.checkpoint-peer{padding-left:13px}
+.checklist-cp.checkpoint-detail{padding-left:32px;background:#fdfdfd;box-shadow:inset 2px 0 0 #e4e9ed}
+.checklist-cp.status-ok{background:#fbfffd;box-shadow:inset 3px 0 0 #9ed8bf}
+.checklist-cp.status-issue{background:#fff7f7;box-shadow:inset 3px 0 0 #efaaaa}
+.checklist-cp.status-na{background:#fafafa;box-shadow:inset 3px 0 0 #cbd2d9}
 .checklist-cp-title{display:grid;grid-template-columns:24px minmax(0,1fr) 24px;gap:8px;align-items:flex-start}
 .cp-marker{
-  width:24px;height:24px;display:grid;place-items:center;align-self:start;color:#607889;font-size:19px;font-weight:1000;line-height:1;
+  width:24px;height:24px;display:grid;place-items:center;align-self:start;color:#405d70;font-size:18px;font-weight:1000;line-height:1;
 }
-.checklist-cp.checkpoint-parent .cp-marker{color:#173f59;font-size:17px}
-.checklist-cp.checkpoint-child .cp-marker{color:#607889;font-size:21px;font-weight:800}
-.checklist-cp.checkpoint-detail .cp-marker{color:#7a8792;font-size:19px}
-.checklist-cp.marker-plain .cp-marker{color:#173f59;font-size:17px}
+.checklist-cp.marker-square .cp-marker{font-size:16px;color:#244f6b}
+.checklist-cp.marker-circle .cp-marker{font-size:20px;color:#536d7f}
+.checklist-cp.marker-dash .cp-marker{font-size:18px;color:#7a8792}
+.checklist-cp.marker-plain .cp-marker{font-size:16px;color:#244f6b}
 .cp-order{
   min-width:22px;height:22px;padding:0 4px;border-radius:7px;display:grid;place-items:center;background:#edf2f6;color:#718293;font-size:9px;font-weight:900;
 }
 .checklist-cp.status-ok .cp-order{background:#dff6e9;color:#087f5b}
 .checklist-cp.status-issue .cp-order{background:#ffe0e0;color:#c92a2a}
 .checklist-cp.status-na .cp-order{background:#e9edf1;color:#5f6b76}
-.checklist-cp-title p{margin:2px 0 0;font-size:13px;line-height:1.48;color:#243847}
-.checklist-cp.checkpoint-parent .checklist-cp-title p{font-weight:1000;color:#173f59}
-.checklist-cp.checkpoint-child .checklist-cp-title p{color:#344c5e}
-.checklist-cp.checkpoint-detail .checklist-cp-title p{font-size:12.5px;color:#526575}
+.checklist-cp-title p{margin:2px 0 0;font-size:13px;line-height:1.48;color:#243847;font-weight:750}
+.checklist-cp.checkpoint-detail .checklist-cp-title p{font-size:12.5px;color:#526575;font-weight:650}
 .checklist-status-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:11px}
-.checklist-cp.checkpoint-child .checklist-status-buttons,.checklist-cp.checkpoint-child .checklist-cp-detail{margin-left:32px}
-.checklist-cp.checkpoint-detail .checklist-status-buttons,.checklist-cp.checkpoint-detail .checklist-cp-detail{margin-left:32px}
+.checklist-cp.checkpoint-detail .checklist-status-buttons,.checklist-cp.checkpoint-detail .checklist-cp-detail{margin-left:24px}
 .checklist-status-buttons button{
   height:38px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#526577;font-size:11px;font-weight:900;
 }
@@ -376,17 +358,16 @@ body.checklist-pdf-generating{overflow:hidden!important}
 .pdf-marker-cell span{display:block;font-size:13px;line-height:1.05;color:#314f63;font-weight:1000}
 .pdf-marker-cell small{display:block;margin-top:2px;color:#7a8995;font-size:7px;font-weight:800}
 .pdf-item-cell{position:relative}
-.pdf-check-table tr.pdf-parent td{background:#edf3f7;font-weight:800;border-top-width:1.5px}
-.pdf-check-table tr.pdf-parent .pdf-marker-cell span{color:#173f59}
-.pdf-check-table tr.pdf-child .pdf-item-cell{padding-left:17px}
-.pdf-check-table tr.pdf-detail .pdf-item-cell{padding-left:28px;color:#526575;font-size:9.5px}
-.pdf-check-table tr.marker-circle .pdf-marker-cell span{font-size:15px;color:#647b8c}
+.pdf-check-table tr.pdf-peer .pdf-item-cell{padding-left:5px;color:#1f3443;font-size:10px;font-weight:650}
+.pdf-check-table tr.pdf-detail .pdf-item-cell{padding-left:24px;color:#526575;font-size:9.5px}
+.pdf-check-table tr.marker-square .pdf-marker-cell span{font-size:12px;color:#244f6b}
+.pdf-check-table tr.marker-circle .pdf-marker-cell span{font-size:15px;color:#536d7f}
 .pdf-check-table tr.marker-dash .pdf-marker-cell span{font-size:14px;color:#7a8792}
-.pdf-check-table tr.marker-plain .pdf-marker-cell span{font-size:11px;color:#173f59}
+.pdf-check-table tr.marker-plain .pdf-marker-cell span{font-size:11px;color:#244f6b}
 .pdf-check-table tr.pdf-issue td{background:#fff1f1}
-.pdf-check-table tr.pdf-parent.pdf-issue td{background:#ffe7e7}
 .pdf-photo img{max-width:150px;max-height:95px;margin-top:4px;border:1px solid #aebac4}
 .pdf-bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.pdf-bottom-grid.single{grid-template-columns:1fr}
 .pdf-bottom-grid section{border:1px solid #aebac4;padding:8px;min-height:72px;break-inside:avoid}
 .pdf-bottom-grid p{margin:0;white-space:pre-wrap}
 .pdf-signatures{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;break-inside:avoid}
@@ -406,10 +387,8 @@ body.checklist-pdf-generating{overflow:hidden!important}
   .checklist-writer-actions{grid-template-columns:1fr 1fr}
   .checklist-writer-actions .primary{grid-column:1/-1}
   .checklist-status-buttons button{font-size:10px;padding:0 2px}
-  .checklist-cp.checkpoint-child{padding-left:20px}
-  .checklist-cp.checkpoint-detail{padding-left:28px}
-  .checklist-cp.checkpoint-child .checklist-status-buttons,.checklist-cp.checkpoint-child .checklist-cp-detail,
-  .checklist-cp.checkpoint-detail .checklist-status-buttons,.checklist-cp.checkpoint-detail .checklist-cp-detail{margin-left:18px}
+  .checklist-cp.checkpoint-detail{padding-left:24px}
+  .checklist-cp.checkpoint-detail .checklist-status-buttons,.checklist-cp.checkpoint-detail .checklist-cp-detail{margin-left:14px}
   .section-card-head{align-items:flex-start}
 }
 @media (max-width:380px){
