@@ -8,10 +8,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="작업안전 체크">
   <title>작업안전 체크리스트</title>
+  <meta name="application-version" content="1.3.1">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="app.css?v=20260724r3">
-  <link rel="stylesheet" href="styles-checklist.css?v=20260724r3">
+  <link rel="stylesheet" href="app.css?v=20260724r4">
+  <link rel="stylesheet" href="styles-checklist.css?v=20260724r4">
 </head>
 <body>
   <header id="topbar" class="topbar">
@@ -26,9 +27,12 @@
     <a href="#/checklists/drafts" data-route="drafts"><span>▤</span><b>임시저장</b></a>
     <a href="#/checklists/calendar" data-route="calendar"><span>▦</span><b>보관</b></a>
   </nav>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="data/research-checklists-v1.js?v=20260724r3"></script>
-  <script src="components/research-checklist.js?v=20260724r3"></script>
-  <script src="app.js?v=20260724r3"></script>
+  <!-- Power TBM과 같은 PDF 엔진: 정적 캔버스 → jsPDF A4 안전 분할 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="data/research-checklists-v1.js?v=20260724r4"></script>
+  <script src="components/research-checklist.js?v=20260724r4"></script>
+  <script src="app.js?v=20260724r4"></script>
 </body>
 </html>

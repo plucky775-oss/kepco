@@ -137,33 +137,25 @@
 .mini-action{
   border:1px solid #a9c5e4;background:#edf5ff;color:#185690;border-radius:10px;height:34px;padding:0 10px;font-size:11px;font-weight:900;
 }
-.checklist-info-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;padding:14px}
-.checklist-info-grid label{display:flex;min-width:0;flex-direction:column;gap:5px;font-size:11px;font-weight:800;color:#55697b}
+.checklist-info-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px;padding:14px}
+.checklist-info-grid label,.checklist-info-grid .checklist-field{grid-column:span 6;display:flex;min-width:0;flex-direction:column;gap:5px;font-size:11px;font-weight:800;color:#55697b}
 .checklist-info-grid label.wide{grid-column:1/-1}
+.checklist-info-grid .date-time-field{grid-column:span 5}
+.checklist-info-grid .location-field{grid-column:span 7}
 .checklist-info-grid input,.checklist-info-grid textarea{
   width:100%;min-width:0;max-width:100%;border:1px solid #cbd5e1!important;background:#fff!important;border-radius:11px!important;padding:10px 11px!important;color:#172b3a!important;font-size:14px!important;outline:0;
 }
 .checklist-info-grid input{height:42px;min-inline-size:0}
-/* iPad Safari의 datetime-local 네이티브 표시 높이가 CSS를 무시하는 문제를 피하기 위해
-   고정 높이 표시부 위에 실제 날짜 선택 입력기를 투명하게 겹친다. */
-.compact-datetime-control{
-  position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;
-  width:100%;height:42px;min-height:42px;max-height:42px;overflow:hidden;
-  border:1px solid #cbd5e1;background:#fff;border-radius:11px;padding:0 8px 0 11px;
-  color:#172b3a;font-size:14px;font-weight:700;line-height:1;touch-action:manipulation;
-}
-.compact-datetime-control:focus-within{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
-.compact-datetime-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.compact-datetime-action{flex:0 0 auto;border-radius:7px;background:#edf5ff;color:#2563eb;padding:5px 7px;font-size:10px;font-weight:900}
-.checklist-info-grid .compact-datetime-control input.native-datetime-overlay{
-  position:absolute!important;inset:0!important;z-index:2!important;display:block!important;
-  width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-height:none!important;
-  margin:0!important;padding:0!important;border:0!important;border-radius:11px!important;
-  opacity:0!important;background:transparent!important;box-shadow:none!important;cursor:pointer!important;
-  font-size:16px!important;line-height:42px!important;
-}
+.field-caption{display:block;line-height:1.25}
+.datetime-parts{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(92px,.85fr);gap:8px;min-width:0;width:100%}
+.datetime-part-shell{display:block;min-width:0;width:100%;height:42px;overflow:hidden;border:1px solid #cbd5e1;border-radius:11px;background:#fff}
+.checklist-info-grid .datetime-part-shell input{display:block;width:100%!important;min-width:0!important;max-width:100%!important;height:40px!important;border:0!important;border-radius:0!important;background:transparent!important;padding:0 9px!important;font-size:13px!important;line-height:40px!important;box-shadow:none!important;text-align:left}
+.checklist-info-grid .datetime-part-shell input::-webkit-date-and-time-value{text-align:left;min-width:0;margin:0}
+.checklist-info-grid .datetime-part-shell input::-webkit-datetime-edit{min-width:0;padding:0}
+.datetime-part-shell:focus-within{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
 .checklist-info-grid textarea{resize:vertical;min-height:62px}
 .checklist-info-grid input:focus,.checklist-info-grid textarea:focus{border-color:#3b82f6!important;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+.checklist-info-grid .datetime-part-shell input:focus{box-shadow:none!important}
 .checklist-info-grid input[readonly]{background:#f3f6f9!important;color:#506172!important}
 .tbm-import-note{
   display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 14px 14px;padding:10px 11px;border-radius:11px;background:#f3f6f9;color:#66788a;font-size:11px;
@@ -330,9 +322,10 @@
 .checklist-toast.show{opacity:1;transform:translate(-50%,0)}
 .checklist-toast.ok{background:#087f5b}
 
-/* PDF canvas */
+/* PDF canvas: Power TBM과 같은 A4 정적 스냅샷 렌더링 스테이지 */
 .checklist-pdf-render-host{
-  position:fixed;left:0;top:0;width:794px;max-width:none;background:#fff;z-index:2147483000;pointer-events:none;overflow:visible;
+  position:absolute;left:0;top:0;width:794px;height:0;max-width:none;margin:0;padding:0;
+  background:#fff;z-index:-2147483647;pointer-events:none;overflow:visible;opacity:1;visibility:visible;
   color-scheme:light;
 }
 .checklist-pdf-generation-cover{
@@ -387,7 +380,7 @@ body.checklist-pdf-generating{overflow:hidden!important}
   .checklist-link-state small{white-space:normal}
   .checklist-source-card{align-items:flex-start;flex-direction:column}
   .checklist-info-grid{grid-template-columns:1fr}
-  .checklist-info-grid label.wide{grid-column:auto}
+  .checklist-info-grid label,.checklist-info-grid .checklist-field,.checklist-info-grid label.wide,.checklist-info-grid .date-time-field,.checklist-info-grid .location-field{grid-column:1/-1}
   .checklist-sign-grid{grid-template-columns:1fr}
   .signature-box canvas{height:105px}
   .checklist-writer-actions{grid-template-columns:1fr 1fr}
@@ -397,6 +390,7 @@ body.checklist-pdf-generating{overflow:hidden!important}
   .tbm-import-note{align-items:flex-start;flex-direction:column}
 }
 @media (max-width:380px){
+  .datetime-parts{grid-template-columns:minmax(0,1fr) 92px;gap:7px}
   .checklist-filter-row{grid-template-columns:1fr}
   .checklist-menu-card{grid-template-columns:42px minmax(0,1fr) auto}
   .checklist-menu-card .menu-symbol{width:42px;height:42px}
@@ -409,4 +403,36 @@ body.checklist-pdf-generating{overflow:hidden!important}
   .checklist-view-document,.checklist-view-document *{visibility:visible!important}
   .checklist-view-document{position:absolute;left:0;top:0;border:0!important;padding:0!important;background:#fff!important;overflow:visible!important}
   .checklist-view-document .checklist-pdf-sheet{min-width:0;width:100%}
+}
+
+
+/* v1.3.1 Power TBM-style PDF ready dialog */
+.checklist-pdf-ready-backdrop{
+  position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;
+  padding:20px max(18px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));
+  background:rgba(15,23,42,.58);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+}
+.checklist-pdf-ready-card{
+  width:min(430px,100%);max-height:calc(100vh - 40px);overflow:auto;
+  padding:22px;border-radius:22px;background:#fff;color:#173c56;text-align:center;
+  box-shadow:0 24px 70px rgba(15,23,42,.28);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+}
+.checklist-pdf-ready-card .pdf-ready-icon{font-size:42px;line-height:1;margin-bottom:9px}
+.checklist-pdf-ready-card h2{margin:0 0 9px;font-size:22px;letter-spacing:-.5px}
+.checklist-pdf-ready-card .pdf-ready-name{
+  margin:0 0 8px;padding:10px 11px;border-radius:12px;background:#f2f6f9;color:#36566d;
+  font-size:11px;font-weight:900;line-height:1.45;overflow-wrap:anywhere;
+}
+.checklist-pdf-ready-card .pdf-ready-guide{margin:0 0 15px;color:#66788a;font-size:12px;font-weight:700;line-height:1.55}
+.checklist-pdf-ready-card button{
+  width:100%;min-height:48px;margin-top:8px;border-radius:13px;border:1px solid #c9d8e3;
+  background:#f8fbfd;color:#28516c;font-size:13px;font-weight:1000;cursor:pointer;
+}
+.checklist-pdf-ready-card button:disabled{opacity:.65;cursor:wait}
+.checklist-pdf-ready-card .pdf-ready-save{border-color:#194c6a;background:#194c6a;color:#fff;box-shadow:0 10px 22px rgba(25,76,106,.2)}
+.checklist-pdf-ready-card .pdf-ready-share{border-color:#b9d5c7;background:#effaf4;color:#17603b}
+.checklist-pdf-ready-card .pdf-ready-close{background:#fff;color:#64748b}
+
+@media print{
+  .checklist-pdf-ready-backdrop,.checklist-pdf-generation-cover{display:none!important}
 }

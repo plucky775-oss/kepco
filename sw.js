@@ -1,5 +1,44 @@
-const CACHE='safety-checklist-standalone-v3-ipad-datetime-fix';
-const ASSETS=['./','./index.html','./app.css','./styles-checklist.css','./app.js','./data/research-checklists-v1.js','./components/research-checklist.js','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
-self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
-self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request,{}).then(r=>r||fetch(e.request).then(res=>{const copy=res.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return res;}).catch(()=>caches.match('./index.html'))));});
+const CACHE='safety-checklist-standalone-v1.3.1-r4';
+const PDF_CACHE='safety-checklist-pdf-downloads-v1';
+const CORE=[
+  './',
+  './index.html',
+  './app.css?v=20260724r4',
+  './styles-checklist.css?v=20260724r4',
+  './app.js?v=20260724r4',
+  './data/research-checklists-v1.js?v=20260724r4',
+  './components/research-checklist.js?v=20260724r4',
+  './manifest.webmanifest',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
+];
+self.addEventListener('install',event=>{
+  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));
+});
+self.addEventListener('activate',event=>{
+  event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE && key!==PDF_CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));
+});
+self.addEventListener('fetch',event=>{
+  const request=event.request;
+  if(request.method!=='GET') return;
+  const url=new URL(request.url);
+  if(url.pathname.includes('/__safety_checklist_pdf__/')){
+    event.respondWith(caches.open(PDF_CACHE).then(cache=>cache.match(request)).then(response=>response || new Response('PDF not found',{status:404})));
+    return;
+  }
+  if(request.mode==='navigate'){
+    event.respondWith(fetch(request).then(response=>{
+      const copy=response.clone();
+      caches.open(CACHE).then(cache=>cache.put('./index.html',copy));
+      return response;
+    }).catch(()=>caches.match('./index.html')));
+    return;
+  }
+  event.respondWith(fetch(request).then(response=>{
+    if(response && (response.ok || response.type==='opaque')){
+      const copy=response.clone();
+      caches.open(CACHE).then(cache=>cache.put(request,copy));
+    }
+    return response;
+  }).catch(()=>caches.match(request,{ignoreSearch:true})));
+});

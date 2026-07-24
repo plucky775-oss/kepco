@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  window.APP_VERSION='1.2.0';
+  window.APP_VERSION='1.3.1';
   const app=document.getElementById('app');
   const title=document.getElementById('pageTitle');
   const sub=document.getElementById('pageSub');
@@ -11,7 +11,6 @@
   function activeNav(key){ document.querySelectorAll('.bottom-nav a').forEach(a=>a.classList.toggle('active',a.dataset.route===key)); }
   async function route(){
     const hash=location.hash||'#/checklists';
-    document.body.classList.toggle('checklist-writing-mode',hash.startsWith('#/checklists/write/'));
     try{
       if(hash==='#/checklists'||hash==='#/'||hash==='#') { activeNav('home'); return window.renderChecklistMenuPage(); }
       if(hash.startsWith('#/checklists/picker')||hash.startsWith('#/checklists/new')) { activeNav('picker'); return window.renderChecklistPickerPage(); }
@@ -30,7 +29,7 @@
       refreshing=true;
       location.reload();
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260724r3',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20260724r4',{updateViaCache:'none'}).then(reg=>reg.update()).catch(()=>{}));
   }
   route();
 })();
