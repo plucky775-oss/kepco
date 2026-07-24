@@ -1,13 +1,13 @@
-const CACHE='safety-checklist-standalone-v1.4.0-r5';
+const CACHE='safety-checklist-standalone-v1.5.0-r6';
 const PDF_CACHE='safety-checklist-pdf-downloads-v1';
 const CORE=[
   './',
   './index.html',
-  './app.css?v=20260724r5',
-  './styles-checklist.css?v=20260724r5',
-  './app.js?v=20260724r5',
-  './data/research-checklists-v1.js?v=20260724r5',
-  './components/research-checklist.js?v=20260724r5',
+  './app.css?v=20260724r6',
+  './styles-checklist.css?v=20260724r6',
+  './app.js?v=20260724r6',
+  './data/research-checklists-v1.js?v=20260724r6',
+  './components/research-checklist.js?v=20260724r6',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png'
